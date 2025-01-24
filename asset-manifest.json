@@ -1,15 +1,16 @@
 {
   "files": {
     "main.css": "/zamorintempleproject/static/css/main.f30b5082.css",
-    "main.js": "/zamorintempleproject/static/js/main.2463bca1.js",
+    "main.js": "/zamorintempleproject/static/js/main.2b51039a.js",
     "static/js/453.6b4e854f.chunk.js": "/zamorintempleproject/static/js/453.6b4e854f.chunk.js",
+    "static/media/locIcon.png": "/zamorintempleproject/static/media/locIcon.325dd22f110dea7749df.png",
     "index.html": "/zamorintempleproject/index.html",
     "main.f30b5082.css.map": "/zamorintempleproject/static/css/main.f30b5082.css.map",
-    "main.2463bca1.js.map": "/zamorintempleproject/static/js/main.2463bca1.js.map",
+    "main.2b51039a.js.map": "/zamorintempleproject/static/js/main.2b51039a.js.map",
     "453.6b4e854f.chunk.js.map": "/zamorintempleproject/static/js/453.6b4e854f.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.f30b5082.css",
-    "static/js/main.2463bca1.js"
+    "static/js/main.2b51039a.js"
   ]
 }
