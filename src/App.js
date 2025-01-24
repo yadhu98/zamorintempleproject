@@ -116,7 +116,7 @@ function App() {
 
     // Custom marker icon using Feather SVG
     const customIcon = L.icon({
-      iconUrl: '/locIcon.png', // Path to your PNG image
+      iconUrl: '/images/locIcon.png', // Path to your PNG image
       iconSize: [60, 60], // Adjust based on your image dimensions
       iconAnchor: [16, 32], // Anchor point of the icon (centered at the bottom)
       popupAnchor: [0, -32], // Popup position relative to the marker
