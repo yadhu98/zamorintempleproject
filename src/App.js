@@ -307,7 +307,7 @@ const renderAccordionTwo = () => {
           <h3>Zamorin's Central Devasom - Temples</h3>
         </div>
         
-        <button onClick={() => mapStyle === '1' ? setMapStyle('2') : setMapStyle('1')}>Toggle map style</button>
+        <button style={{ backgroundColor: '#a2574f', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer' }} onClick={() => mapStyle === '1' ? setMapStyle('2') : setMapStyle('1')}>Toggle map style</button>
       </header>
       <div className="content">
         <div className="sidebar" 
