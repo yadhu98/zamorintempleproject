@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import LocImage from './images/locIcon.png';
+import Member1 from './images/Person1.jpg'
+import Manager from './images/Manager.jpg'
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Slideshow from './ImageSlider';
@@ -23,11 +25,10 @@ const data = [
       {
         name: 'Sree Ramaswami Temple, (Sreerama)',
         details: 'Address: Tali Devaswom, Tali, Kozhikode-2, Contact: 0495 2703610',
-        coordinates: { lat: 11.248147944046364, lng: 75.787605411904 },
+        coordinates: { lat: 11.248832823384667, lng: 75.78693262786435 },
         slides : [
-          'https://www.citybit.in/wp-content/uploads/2023/10/Tali-Shiva-Temple.jpg',
-          'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/22/cb/17/inside-tali-temple.jpg?w=700&h=400&s=1',
-          'https://www.shutterstock.com/image-photo/hindu-temple-tali-shiva-known-600w-2430677279.jpg'
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQF7Jkm_r4VFyz9rsy20YP9ojMq7So_ZbEJAA&s',
+          'https://content3.jdmagicbox.com/comp/kozhikode/j6/0495px495.x495.220319002104.v8j6/catalogue/tali-temple-pond-vadakara-beach-kozhikode-temples-GU8KwBGM8i.jpg',
         ]
       },
       {
@@ -50,9 +51,9 @@ const data = [
         details: 'Address: P.O. Thirunavaya, Tirur,Malappuram Contact: 0494 2603747)',
         coordinates: { lat: 10.863878637593611, lng: 75.98167325237682 },
         slides : [
-          'https://www.citybit.in/wp-content/uploads/2023/10/Tali-Shiva-Temple.jpg',
-          'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/22/cb/17/inside-tali-temple.jpg?w=700&h=400&s=1',
-          'https://www.shutterstock.com/image-photo/hindu-temple-tali-shiva-known-600w-2430677279.jpg'
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPxbK3zXCsFWjxXeUnv3BgVXBh67n8AJcUYw&s',
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFYSTZ-uazKHQiodIHHPkSb9aRxHbkj4yCag&s',
+          'https://i.ytimg.com/vi/52qkqyAXaBI/maxresdefault.jpg'
         ]
       },
       {
@@ -60,9 +61,9 @@ const data = [
         details: 'Address: P.O. Thriprangode, Tirur, Malappuram, Contact: 0494 2566046',
         coordinates: { lat: 10.855840083961287, lng: 75.94775633888423 },
         slides : [
-          'https://www.citybit.in/wp-content/uploads/2023/10/Tali-Shiva-Temple.jpg',
-          'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/22/cb/17/inside-tali-temple.jpg?w=700&h=400&s=1',
-          'https://www.shutterstock.com/image-photo/hindu-temple-tali-shiva-known-600w-2430677279.jpg'
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSm3t4JrQCeWbPq_tqxmGYa0-E5yIJ-q8pmLA&s',
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQNG_xYJsY_TGUKhfg6Cz326tNdE6Z9lVjleg&s',
+          'https://lightuptemples.com/wp-content/uploads/temple/profile_image/malappuram-sri-triprangode-shiva-temple-kerala.jpg'
         ]
       },
       {
@@ -70,9 +71,9 @@ const data = [
         details: 'Address: P.O. Poyilisseri, Tirur, Malappuram., Contact: 0494 2430666',
         coordinates: { lat: 10.872272578183443, lng: 75.93921531375074 },
         slides : [
-          'https://www.citybit.in/wp-content/uploads/2023/10/Tali-Shiva-Temple.jpg',
-          'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/22/cb/17/inside-tali-temple.jpg?w=700&h=400&s=1',
-          'https://www.shutterstock.com/image-photo/hindu-temple-tali-shiva-known-600w-2430677279.jpg'
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoiiwhr_jeeIdt5mEZOIIuo77m1uLfsJSlmA&s',
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSrYnQuO-ynpVnhA19_gv1mn1svHnEWvhuEbA&s',
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxhsc_9NbMcnljj2ZiTy1AUkO7kr55aAPCOA&s'
         ]
       },
     ]
@@ -85,9 +86,8 @@ const data = [
         details: 'Address: Sree Panamanna Devaswom,Ambalavattom, P.O. Panamanna, Ottappalam, Palakkad., Contact: 0466 2242666',
         coordinates: { lat: 10.804542123558923, lng: 76.35485975184109 },
         slides : [
-          'https://www.citybit.in/wp-content/uploads/2023/10/Tali-Shiva-Temple.jpg',
-          'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/22/cb/17/inside-tali-temple.jpg?w=700&h=400&s=1',
-          'https://www.shutterstock.com/image-photo/hindu-temple-tali-shiva-known-600w-2430677279.jpg'
+          'https://lh4.googleusercontent.com/proxy/rWwMd7mkxKKbGQ3KV5u22bRBOQfOUm3gqWXe1KGTc0oXRCDACpmujtl5-_HiYmle0c7irVzrVciDck8m65eix6agKj8M4k9simfzepQHnpIty-Rwu4uaH0sL',
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLOTFOv1ZTUQ5J5LlHb9LR9V_t-KD5OpgWgQ&s',
         ]
       },
       {
@@ -95,9 +95,7 @@ const data = [
         details: 'Address: Sree Panamanna Devaswom, Panamanna, Ottapalam,Palakkad., Contact: 0466 2242666',
         coordinates: { lat: 10.800971607281141, lng: 76.35727363111587 },
         slides : [
-          'https://www.citybit.in/wp-content/uploads/2023/10/Tali-Shiva-Temple.jpg',
-          'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/22/cb/17/inside-tali-temple.jpg?w=700&h=400&s=1',
-          'https://www.shutterstock.com/image-photo/hindu-temple-tali-shiva-known-600w-2430677279.jpg'
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTfqw13Zt_YvmSevcndtA8Dhz62OlI8cPiQ8w&s',
         ]
       },
       {
@@ -105,19 +103,31 @@ const data = [
         details: 'Address: Sree Panamanna Devaswom, Panamanna,Ottapalam, Palakkad, Contact: 0466 2242666',
         coordinates: { lat: 10.822430460489567, lng: 76.35498735335702 },
         slides : [
-          'https://www.citybit.in/wp-content/uploads/2023/10/Tali-Shiva-Temple.jpg',
-          'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/22/cb/17/inside-tali-temple.jpg?w=700&h=400&s=1',
-          'https://www.shutterstock.com/image-photo/hindu-temple-tali-shiva-known-600w-2430677279.jpg'
+          'https://content.jdmagicbox.com/v2/comp/palakkad/k5/9999px491.x491.180223213012.p7k5/catalogue/pattarkonam-shiva-temple-palakkad-temples-gd3g5tie39-250.jpg',
         ]
       },
     ]
   }
 ];
 
+const truste = [
+  {
+    name : 'H.H. K C Unnianujan Raja, The Zamorin Raja of Calicut',
+    position : 'Patron',
+    image : Member1
+  },
+    {
+      name : 'Smt. Maya Govind',
+      position : 'Manager',
+      image : Manager
+    }
+]
+
 function App() {
   const mapRef = useRef(null);
   const modalRef = useRef(null);
   const [activeDistrict, setActiveDistrict] = useState(null);
+  const [activeMember, setActiveMember] = useState(null);
   const [activeTemple,setActiveTemple] = useState(null);
   const [mapStyle, setMapStyle] = useState("2");
   const [modalContent, setModalContent] = useState(null);
@@ -228,6 +238,10 @@ function App() {
     setActiveDistrict(activeDistrict === district ? null : district);
   };
 
+  const handleAcordionClickTwo = (truste) => {
+    setActiveMember(activeMember === truste ? null : truste)
+  }
+
   const handleTempleClick = (temple) => {
     setActiveTemple(temple);
     focusOnTemple(temple.coordinates.lat, temple.coordinates.lng, temple);
@@ -244,7 +258,7 @@ function App() {
           <ul>
             {district.temples.map((temple, idx) => (
               <li style={{color : activeTemple === temple ? 'blue' : 'black', cursor :'pointer'}} key={idx} onClick={() => handleTempleClick(temple)}>
-                {temple.name}
+                Zamorin's {temple.name}
               </li>
             ))}
           </ul>
@@ -253,6 +267,31 @@ function App() {
     ));
   };
 
+
+// 
+
+
+
+
+const renderAccordionTwo = () => {
+  return truste.map((trusteItem, index) => (
+    <div key={index} className="accordion-item">
+      <button className="accordion-header" onClick={() => handleAcordionClickTwo(trusteItem.name)}>
+        {trusteItem.position}
+      </button>
+      <div style={{display: 'flex', alignItems : 'center' , justifyContent : 'center', flexDirection :'column'}} className={`accordion-body ${activeMember === trusteItem.name ? 'open' : ''}`}>
+          <img style={{height : '180px' , width : '150px'}} src={trusteItem.image} alt="image1"/>
+          <div style={{display : 'flex' , flexDirection : 'column'}}>
+
+          </div>
+          <h4>{trusteItem.name}</h4>
+          <span>{trusteItem.position}</span>
+      </div>
+    </div>
+  ));
+};
+
+// 
   const closeModal = () => {
     if (modalRef.current) {
       modalRef.current.style.display = 'none';
@@ -261,9 +300,11 @@ function App() {
 
   return (
     <div className="app">
-      <header style={{ backgroundColor: '#4CAF50', color: 'white', textAlign: 'center', padding: '1rem' , display :'flex',alignItems: 'center',justifyContent : 'space-between'}}>
-   
-        <h1>Malabar Temples</h1>
+      <header style={{ backgroundColor: '#E68057', color: 'white', textAlign: 'center', padding: '1rem' , display :'flex',alignItems: 'center',justifyContent : 'space-between'}}>
+        <div style={{display : 'flex' , flexDirection: 'column'}}>
+          <h3>Zamorin's Central Devasom - Temples</h3>
+        </div>
+        
         <button onClick={() => mapStyle === '1' ? setMapStyle('2') : setMapStyle('1')}>Toggle map style</button>
       </header>
       <div className="content">
@@ -274,7 +315,10 @@ function App() {
           <div className="accordion">
             {renderAccordion()}
           </div>
-
+          <h3>Trustee</h3>
+          <div className='accordion'>
+          {renderAccordionTwo()}
+          </div>
         </div>
         <div id="map" ref={mapRef} style={{ width:'75%' , height: '100vh' }}></div>
       </div>
@@ -298,7 +342,7 @@ function App() {
         
         <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', width: '600px', textAlign: 'center' }}>
         <Slideshow slides={modalContent?.slides}/>
-          <h2>{modalContent?.name}</h2>
+          <h2>Zamorin's {modalContent?.name}</h2>
           <p>{modalContent?.details}</p>
           {/* Add a Directions button */}
           <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer' }} onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${modalContent?.coordinates.lat},${modalContent?.coordinates.lng}`, '_blank')}>
