@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
+import zLogo from './images/ZamorinLogo-removebg-preview.png'
 import LocImage from './images/locIcon.png';
 import Member1 from './images/Person1.jpg'
 import Manager from './images/Manager.jpg'
@@ -257,7 +258,7 @@ function App() {
         {console.log("Accordion Body Class:", activeDistrict === district.district ? 'open' : 'closed')}
           <ul>
             {district.temples.map((temple, idx) => (
-              <li style={{color : activeTemple === temple ? 'blue' : 'black', cursor :'pointer'}} key={idx} onClick={() => handleTempleClick(temple)}>
+              <li style={{color : activeTemple === temple ? '#E68057' : 'black', cursor :'pointer'}} key={idx} onClick={() => handleTempleClick(temple)}>
                 Zamorin's {temple.name}
               </li>
             ))}
@@ -301,7 +302,8 @@ const renderAccordionTwo = () => {
   return (
     <div className="app">
       <header style={{ backgroundColor: '#E68057', color: 'white', textAlign: 'center', padding: '1rem' , display :'flex',alignItems: 'center',justifyContent : 'space-between'}}>
-        <div style={{display : 'flex' , flexDirection: 'column'}}>
+        <div style={{display : 'flex'}}>
+          <img src={zLogo} style={{width : "80px" , height : '60px'}} alt=""/>
           <h3>Zamorin's Central Devasom - Temples</h3>
         </div>
         
@@ -345,10 +347,10 @@ const renderAccordionTwo = () => {
           <h2>Zamorin's {modalContent?.name}</h2>
           <p>{modalContent?.details}</p>
           {/* Add a Directions button */}
-          <button style={{ backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer' }} onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${modalContent?.coordinates.lat},${modalContent?.coordinates.lng}`, '_blank')}>
+          <button style={{ backgroundColor: '#E68057', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer' }} onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${modalContent?.coordinates.lat},${modalContent?.coordinates.lng}`, '_blank')}>
             Get Directions
           </button>
-          <button style={{ backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer', marginLeft: '10px' }} onClick={closeModal}>Close</button>
+          <button style={{ backgroundColor: '#a2574f', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer', marginLeft: '10px' }} onClick={closeModal}>Close</button>
         </div>
       </div>
     </div>
