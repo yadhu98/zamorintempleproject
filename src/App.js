@@ -235,7 +235,6 @@ function App() {
   // };
 
   const handleAccordionClick = (district) => {
-    console.log("district",district)
     setActiveDistrict(activeDistrict === district ? null : district);
   };
 
@@ -304,7 +303,7 @@ const renderAccordionTwo = () => {
       <header style={{ backgroundColor: '#E68057', color: 'white', textAlign: 'center', padding: '1rem' , display :'flex',alignItems: 'center',justifyContent : 'space-between'}}>
         <div style={{display : 'flex'}}>
           <img src={zLogo} style={{width : "80px" , height : '60px'}} alt=""/>
-          <h3>Zamorin's Central Devasom - Temples</h3>
+          <h3>Zamorin's Central Devaswom - Temples</h3>
         </div>
         
         <button style={{ backgroundColor: '#a2574f', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer' }} onClick={() => mapStyle === '1' ? setMapStyle('2') : setMapStyle('1')}>Toggle map style</button>
