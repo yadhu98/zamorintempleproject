@@ -65,6 +65,7 @@
 
 .accordion-body.open {
     max-height: 500px;
+    overflow: scroll;
     /* Expand to fit content */
     padding: 10px;
     /* Add padding when expanded */

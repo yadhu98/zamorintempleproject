@@ -1,0 +1,306 @@
+[{
+        "district": "Kozhikode",
+        "temples": [{
+                "name": "Sree Tali Devaswom (Siva & Krishna)",
+                "details": "Address: Tali, Kozhikode, Contact: 4952703610",
+                "coordinates": { "lat": 11.248147944046364, "lng": 75.787605411904 },
+                "slides": [
+                    "https://www.citybit.in/wp-content/uploads/2023/10/Tali-Shiva-Temple.jpg",
+                    "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/11/22/cb/17/inside-tali-temple.jpg?w=700&h=400&s=1",
+                    "https://www.shutterstock.com/image-photo/hindu-temple-tali-shiva-known-600w-2430677279.jpg"
+                ]
+            },
+            {
+                "name": "Sree Ramaswami Temple (Sree Rama)",
+                "details": "Address: Tali Devaswom, Tali, Kozhikode, Contact: Not Available",
+                "coordinates": { "lat": 11.248832823384667, "lng": 75.78693262786435 },
+                "slides": [
+                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQF7Jkm_r4VFyz9rsy20YP9ojMq7So_ZbEJAA&s",
+                    "https://content3.jdmagicbox.com/comp/kozhikode/j6/0495px495.x495.220319002104.v8j6/catalogue/tali-temple-pond-vadakara-beach-kozhikode-temples-GU8KwBGM8i.jpg"
+                ]
+            },
+            {
+                "name": "Sree Valayanad Devaswom (Devi)",
+                "details": "Address: P.O. Kommeri, Kozhikode, Contact: 4952741083",
+                "coordinates": { "lat": 11.24397061799881, "lng": 75.80394439470938 },
+                "slides": [
+                    "https://media.holidify.com/images/cmsuploads/compressed/gallery-images-03-1_20241203173837.jpg",
+                    "https://s3.ap-south-1.amazonaws.com/esapp/evmpic/1548926275184.jpg",
+                    "https://media1.thrillophilia.com/filestore/ycip9bow7p7ei8a0q8hv3r5rjy3t_gallery-images-07.jpg?w=400&dpr=2"
+                ]
+            },
+            {
+                "name": "Thevarambalam Sree Valayanad Devaswom",
+                "details": "Address: P.O. Koomeri, Kozhikode, Contact: Not Available",
+                "coordinates": { "lat": 11.243866069748899, "lng": 75.8044681747664 },
+                "slides": []
+            },
+            {
+                "name": "Sree Parthasarathi Temple (Krishna)",
+                "details": "Address: Govindapuram, Kozhikode, Contact: 4952743494",
+                "coordinates": { "lat": 11.249574804055579, "lng": 75.80463233564768 },
+                "slides": []
+            },
+            {
+                "name": "Sree Kanhilasseri Devaswom (Siva)",
+                "details": "Address: P.O. Thuvakode, via Pookkad, Kozhikode, Contact: 4962688997",
+                "coordinates": { "lat": 11.404793324477478, "lng": 75.73489356999143 },
+                "slides": []
+            },
+            {
+                "name": "Sree Varakal Devaswom (Devi)",
+                "details": "Address: P.O. Westhill, Kozhikode, Contact: 4952383134",
+                "coordinates": { "lat": 11.29027972733261, "lng": 75.76205736182241 },
+                "slides": []
+            },
+            {
+                "name": "Sree Puthur Devaswom (Devi)",
+                "details": "Address: Puthur, P.O. Puthiyangadi, Kozhikode, Contact: 4952462020",
+                "coordinates": { "lat": 11.315989519191291, "lng": 75.75374243187767 },
+                "slides": []
+            },
+            {
+                "name": "Sree Thalikunnu Devaswom (Siva)",
+                "details": "Address: P.O. Mankave, Kozhikode, Contact: 495232000",
+                "coordinates": { "lat": 11.238866205387914, "lng": 75.80958966301684 },
+                "slides": []
+            },
+            {
+                "name": "Sree Mathilakam Devaswom (Narasimham)",
+                "details": "Address: Thalakulathur, Kozhikode, Contact: 4952853335",
+                "coordinates": { "lat": 11.360328868556094, "lng": 75.76202543135723 },
+                "slides": []
+            },
+            {
+                "name": "Sree Perumana Devaswom (Siva)",
+                "details": "Address: Perumana, Kozhikode, Contact: 4952563362",
+                "coordinates": { "lat": 11.240658035368806, "lng": 75.89077016551394 },
+                "slides": []
+            }
+        ]
+    },
+    {
+        "district": "Malappuram",
+        "temples": [{
+                "name": "Sree Thirunavaya Devaswom (Navamukundan)",
+                "details": "Address: P.O. Thirunavaya, Tirur, Malappuram, Contact: 4942603747",
+                "coordinates": { "lat": 10.864190313871667, "lng": 75.98162869456755 },
+                "slides": []
+            },
+            {
+                "name": "Sree Ayyapa Kshetram, Sree Thirunavaya Devaswom",
+                "details": "Address: P.O. Thirunavaya, Tirur, Malappuram, Contact: Not Available",
+                "coordinates": { "lat": 10.864733556702204, "lng": 75.98306695700224 },
+                "slides": []
+            },
+            {
+                "name": "Sree Thriprangode Devaswom (Siva)",
+                "details": "Address: P.O. Thriprangode, Tirur, Malappuram, Contact: 4942566046",
+                "coordinates": { "lat": 10.85635622786872, "lng": 75.94743441643814 },
+                "slides": []
+            },
+            {
+                "name": "Sree Alathiyur Perumthiri Kovil Devaswom (Hanuman Kavu, Sree Rama)",
+                "details": "Address: P.O. Poylisseri, Tirur, Malappuram, Contact: 4942430666",
+                "coordinates": { "lat": 10.872782656989198, "lng": 75.93941519827864 },
+                "slides": []
+            },
+            {
+                "name": "Sree Amblakulangara Devi Temple",
+                "details": "Address: P.O. Trikkandiyur, Tirur, Malappuram, Contact: 4942428855",
+                "coordinates": { "lat": 10.911483759336624, "lng": 75.92259422775 },
+                "slides": []
+            },
+            {
+                "name": "Sree Trikandiyur Devaswom (Siva)",
+                "details": "Address: P.O. Trikkandiyur, Tirur, Malappuram, Contact: 4942428855",
+                "coordinates": { "lat": 10.906168812645458, "lng": 75.92395048523058 },
+                "slides": []
+            },
+            {
+                "name": "Sree Niramkaitha Kotta Devaswom (Ayyappan, Devi)",
+                "details": "Address: P.O. Vallikunnu North, Malappuram, Contact: 4942470800",
+                "coordinates": { "lat": 11.139064877118658, "lng": 75.84814627734183 },
+                "slides": []
+            },
+            {
+                "name": "Sree Trikulam Devaswom (Siva)",
+                "details": "Address: P.O. Tirurangadi, Malappuram, Contact: 4942465757",
+                "coordinates": { "lat": 11.042926545043263, "lng": 75.90237174529248 },
+                "slides": []
+            },
+            {
+                "name": "Sree Bhagavathyalungal Devi Temple, Sri Trikulam Devaswom",
+                "details": "Address: P.O. Tirurangadi, Malappuram, Contact: 4942465757",
+                "coordinates": { "lat": 11.042926545043263, "lng": 75.90237174529248 },
+                "slides": []
+            },
+            {
+                "name": "Sree Trikavu Devaswom (Devi)",
+                "details": "Address: P.O. Ponnani, Malappuram, Contact: 4942629778",
+                "coordinates": { "lat": 10.778940225431098, "lng": 75.92977460197713 },
+                "slides": []
+            },
+            {
+                "name": "Thirumanikkara Sri Guruvayurappan Temple, Sri Trikkalangode Devaswom",
+                "details": "Address: P.O. Trikkalangode, Malappuram, Contact: 4832840439",
+                "coordinates": { "lat": 11.152291204371446, "lng": 76.11539177787478 },
+                "slides": []
+            },
+            {
+                "name": "Sree Meledam Siva Temple, Sri Trikkalangode Devaswom",
+                "details": "Address: P.O. Trikkalangode, Malappuram, Contact: 4832840155",
+                "coordinates": { "lat": 11.152291204371446, "lng": 76.11539177787478 },
+                "slides": []
+            },
+            {
+                "name": "Sree Valliyankavu Devi Temple, Sri Trikkalangode Devaswom",
+                "details": "Address: P.O. Trikkalangode, Malappuram, Contact: 4832840439",
+                "coordinates": { "lat": 11.15897241944631, "lng": 76.11576006440885 },
+                "slides": []
+            },
+            {
+                "name": "Sree Pandaloor Devaswom (Bhagavathy)",
+                "details": "Address: P.O. Pandaloor, Manjeri, Malappuram, Contact: Not Available",
+                "coordinates": { "lat": 11.083017605306926, "lng": 76.16353000801786 },
+                "slides": []
+            },
+            {
+                "name": "Sri Vettathu Kavu Devaswom (Bhagavathy)",
+                "details": "Address: P.O. Vettam, Tirur, Malappuram, Contact: 4942630033",
+                "coordinates": { "lat": 10.881701259365004, "lng": 75.90444173343276 },
+                "slides": []
+            },
+            {
+                "name": "Sree Kodur Putrakovil Devaswom (Mahavishnu)",
+                "details": "Address: P.O. Kundur, Malappuram, Contact: Not Available",
+                "coordinates": { "lat": 11.00965837491872, "lng": 75.92440073344571 },
+                "slides": []
+            },
+            {
+                "name": "Sree Kunhikulangara Devaswom (Siva Kshetram)",
+                "details": "Address: P.O. Keraladheeswarapuram, Tirur, Malappuram, Contact: Not Available (Correct location needed to be updated)",
+                "coordinates": { "lat": 10.962430196711654, "lng": 75.89412017063353 },
+                "slides": []
+            }
+        ]
+    },
+    {
+        "district": "Palakkad",
+        "temples": [{
+                "name": "Sree Panamanna Sankara Narayana Swami Temple, Panamanna Devaswom, Ambalavattam",
+                "details": "Address: P.O. Panamanna, Ottappalam, Palakkad, Contact: 4662242666",
+                "coordinates": { "lat": 10.805016202142152, "lng": 76.35452710055378 },
+                "slides": []
+            },
+            {
+                "name": "Sree Kooradi Siva Temple, Panamanna Devaswom",
+                "details": "Address: P.O. Panamanna, Ottappalam, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.79907763854605, "lng": 76.35930946086768 },
+                "slides": []
+            },
+            {
+                "name": "Sree Pattarkonam Siva Temple, Panamanna Devaswom",
+                "details": "Address: P.O. Panamanna, Ottappalam, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.822541175322108, "lng": 76.35126962965447 },
+                "slides": []
+            },
+            {
+                "name": "Sree Malonma Devi Temple, Panamanna Devaswom",
+                "details": "Address: P.O. Panamanna, Ottappalam, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.81931307036025, "lng": 76.36104816033505 },
+                "slides": []
+            },
+            {
+                "name": "Sree Chulliyolma Devi Temple, Panamanna Devaswom",
+                "details": "Address: P.O. Panamanna, Ottappalam, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.81931307036025, "lng": 76.36104816033505 },
+                "slides": []
+            },
+            {
+                "name": "Sri Pazhanikavu Vishnu Temple, Panamanna Devaswom",
+                "details": "Address: P.O. Panamanna, Ottappalam, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.800228473132687, "lng": 76.35093441203132 },
+                "slides": []
+            },
+            {
+                "name": "Sree Kottekavu Devaswom (Bhagavathy)",
+                "details": "Address: P.O. Kootekavu, Ottappalam, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.804426727664891, "lng": 76.4064734221159 },
+                "slides": []
+            },
+            {
+                "name": "Sree Panniyur Devaswom (Varahamurthy)",
+                "details": "Address: P.O. Kumbidi, Palakkad, Contact: 4662022125",
+                "coordinates": { "lat": 10.827194954881165, "lng": 76.0556720227788 },
+                "slides": []
+            },
+            {
+                "name": "Sree Thrithala Siva Kshetram, Trithala Devaswom",
+                "details": "Address: P.O. Thrithala, Palakkad, Contact: 4662270455",
+                "coordinates": { "lat": 10.805996263296821, "lng": 76.13446531430732 },
+                "slides": []
+            },
+            {
+                "name": "Sree Mudappakad Ayyappa Kshetram, Thrithala Devaswom",
+                "details": "Address: Paruthur, Pattambi, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.793916535987512, "lng": 76.13122177261221 },
+                "slides": []
+            },
+            {
+                "name": "Sree Mankulam Vishnu Kshetram, Trithala Devaswom",
+                "details": "Address: P.O. Thrithala, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.793916535987512, "lng": 76.13122177261221 },
+                "slides": []
+            },
+            {
+                "name": "Sree Rayiranallur Devaswom (Devi)",
+                "details": "Address: P.O. Rayiranallur, Pattambi, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.873315161133354, "lng": 76.15998858392297 },
+                "slides": []
+            },
+            {
+                "name": "Sree Kodikunnu Devaswom (Devi)",
+                "details": "Address: Kodikunnu, Pattambi, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.830283447752777, "lng": 76.11721251916923 },
+                "slides": []
+            },
+            {
+                "name": "Sree Azhagath Devaswom (Siva)",
+                "details": "Address: Azhagath, Kuzhalmantham, Palakkad, Contact: 4922273751",
+                "coordinates": { "lat": 10.712240175979248, "lng": 76.58968798360075 },
+                "slides": []
+            },
+            {
+                "name": "Sree Nenmeni Perumthrikovil Devaswom (Siva)",
+                "details": "Address: Kollengod, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.593154953449067, "lng": 76.71819317631386 },
+                "slides": []
+            },
+            {
+                "name": "Sree Thekke Guruthiraman Kshetram",
+                "details": "Address: Chunangad, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.787144942445316, "lng": 76.39469796820902 },
+                "slides": []
+            },
+            {
+                "name": "Sree Channapuram Devaswom (Mahavishnu)",
+                "details": "Address: Chennapuram, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.906751441351972, "lng": 76.41579191150154 },
+                "slides": []
+            },
+            {
+                "name": "Sree Paruthipullikulam Devaswom (Durga)",
+                "details": "Address: Paruthipulli, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.764333470631156, "lng": 76.51925614119578 },
+                "slides": []
+            },
+            {
+                "name": "Sree Enanganamkurussikalam Devaswom",
+                "details": "Address: Pattambi, Palakkad, Contact: Not Available",
+                "coordinates": { "lat": 10.802082374239959, "lng": 76.19488078679306 },
+                "slides": []
+            }
+        ]
+    }
+]
