@@ -1,19 +1,19 @@
 {
   "files": {
-    "main.css": "/zamorintempleproject/static/css/main.e2d416de.css",
-    "main.js": "/zamorintempleproject/static/js/main.3d079adc.js",
+    "main.css": "/zamorintempleproject/static/css/main.9ba6ffce.css",
+    "main.js": "/zamorintempleproject/static/js/main.881c2eec.js",
     "static/js/453.6b4e854f.chunk.js": "/zamorintempleproject/static/js/453.6b4e854f.chunk.js",
     "static/media/locIcon.png": "/zamorintempleproject/static/media/locIcon.325dd22f110dea7749df.png",
     "static/media/Person1.jpg": "/zamorintempleproject/static/media/Person1.636db2ca35723008d0ae.jpg",
     "static/media/ZamorinLogo-removebg-preview.png": "/zamorintempleproject/static/media/ZamorinLogo-removebg-preview.9ab614c064605dbb55ee.png",
     "static/media/Manager.jpg": "/zamorintempleproject/static/media/Manager.8bc2f473d9eb71196567.jpg",
     "index.html": "/zamorintempleproject/index.html",
-    "main.e2d416de.css.map": "/zamorintempleproject/static/css/main.e2d416de.css.map",
-    "main.3d079adc.js.map": "/zamorintempleproject/static/js/main.3d079adc.js.map",
+    "main.9ba6ffce.css.map": "/zamorintempleproject/static/css/main.9ba6ffce.css.map",
+    "main.881c2eec.js.map": "/zamorintempleproject/static/js/main.881c2eec.js.map",
     "453.6b4e854f.chunk.js.map": "/zamorintempleproject/static/js/453.6b4e854f.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.e2d416de.css",
-    "static/js/main.3d079adc.js"
+    "static/css/main.9ba6ffce.css",
+    "static/js/main.881c2eec.js"
   ]
 }
