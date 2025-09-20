@@ -25,12 +25,7 @@
     .content {
         flex-direction: column;
     }
-    .sidebar {
-        width: 100% !important;
-        max-height: 45vh;
-        overflow: auto;
-        border-bottom: 1px solid #eee;
-    }
+    .sidebar { display: none !important; }
     #map {
         width: 100% !important;
         height: calc(100dvh - 64px) !important; /* header ~64px */
@@ -347,3 +342,38 @@
 }
 
 /* Keep existing rules below */
+
+/* Generic modal container for temple details */
+.temple-modal {
+    width: min(760px, 96vw);
+    max-height: min(90vh, 100dvh - 32px);
+    overflow: auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: var(--elev);
+    padding: 12px;
+}
+
+/* Disable map interactions when any modal is open */
+body.modal-open #map { pointer-events: none; }
+
+/* Mobile drawer (hamburger) */
+.mobile-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: flex-end;
+    z-index: 2200;
+}
+.mobile-menu {
+    width: min(86vw, 380px);
+    height: 100%;
+    background: #fff;
+    box-shadow: -2px 0 14px rgba(0,0,0,0.2);
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    animation: slideIn .18s ease-out both;
+}
+@keyframes slideIn { from { transform: translateX(8px); opacity: 0.9; } to { transform: translateX(0); opacity: 1; } }

@@ -10,6 +10,7 @@ import Slideshow from './ImageSlider';
 import data from './templeData.json'
 import TripPlannerModal from './TripPlannerModal';
 import InfoManual from './InfoManual';
+import TempleDetailsModal from './TempleDetailsModal';
 
 
 // const data = [
@@ -129,7 +130,8 @@ const truste = [
 
 function App() {
   const mapRef = useRef(null);
-  const modalRef = useRef(null);
+  // Temple details modal state
+  const [templeOpen, setTempleOpen] = useState(false);
   const [activeDistrict, setActiveDistrict] = useState(null);
   const [activeMember, setActiveMember] = useState(null);
   const [activeTemple,setActiveTemple] = useState(null);
@@ -175,6 +177,18 @@ function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [mobileMenuOpen]);
+
+  // Lock scroll when temple modal is open
+  useEffect(() => {
+    if (!templeOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
+    return () => {
+      document.body.style.overflow = prev;
+      document.body.classList.remove('modal-open');
+    };
+  }, [templeOpen]);
 
   const i18n = useMemo(() => ({
     en: {
@@ -889,12 +903,7 @@ function App() {
 
         marker.on('click', () => {
           setModalContent(temple); // Set the modal content
-          if (modalRef.current) {
-            modalRef.current.style.display = 'flex';
-          }
-
-
-          // Update the active marker and previous marker
+          setTempleOpen(true);
         });
       });
     });
@@ -998,9 +1007,7 @@ const renderAccordionTwo = () => {
 
 // 
   const closeModal = () => {
-    if (modalRef.current) {
-      modalRef.current.style.display = 'none';
-    }
+    setTempleOpen(false);
   };
 
   return (
@@ -1036,7 +1043,7 @@ const renderAccordionTwo = () => {
               <strong>{t('appTitle')}</strong>
               {/* <button onClick={() => setMobileMenuOpen(false)} aria-label="Close menu" style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button> */}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10,alignItems: 'stretch' ,padding: '0 12px'}}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10,alignItems: 'stretch' ,padding: '0 12px', height: 'calc(100% - 44px)', overflow: 'auto' }}>
               <select value={lang} onChange={(e) => { setLang(e.target.value); setMobileMenuOpen(false); }} style={{ backgroundColor: '#fff', color: '#333', border: '1px solid #ddd', borderRadius: 6, padding: '10px 12px', cursor: 'pointer' }}>
                 <option value="en">English</option>
                 <option value="ml">മലയാളം</option>
@@ -1044,6 +1051,48 @@ const renderAccordionTwo = () => {
               <button onClick={() => { setMapStyle((s) => s === '1' ? '2' : '1'); setMobileMenuOpen(false); }} style={{ background: '#a2574f', color: '#fff', border: 'none', padding: '12px', borderRadius: 6, textAlign: 'left' }}>{t('toggleMap')}</button>
               <button onClick={() => { setPlannerOpen(true); setMobileMenuOpen(false); }} style={{ background: '#2e7d32', color: '#fff', border: 'none', padding: '12px', borderRadius: 6, textAlign: 'left' }}>{t('planTrip')}</button>
               <button onClick={() => { setHelpOpen(true); setMobileMenuOpen(false); }} style={{ background: '#1976d2', color: '#fff', border: 'none', padding: '12px', borderRadius: 6, textAlign: 'left' }}>{t('helpBtn')}</button>
+
+              {/* Districts and temples in mobile drawer */}
+              <div style={{ marginTop: 8 }}>
+                <h4 style={{ margin: '8px 0' }}>{t('districts')}</h4>
+                <div style={{ border: '1px solid #eee', borderRadius: 6, overflow: 'hidden' }}>
+                  {data.map((district, index) => (
+                    <details key={index} style={{ borderBottom: '1px solid #f2f2f2' }}>
+                      <summary style={{ padding: '10px 12px', background: '#fafafa', cursor: 'pointer' }}>
+                        {lang === 'ml' ? (district.district_ml || toMlDistrict(district.district)) : district.district}
+                      </summary>
+                      <ul style={{ listStyle: 'none', margin: 0, padding: '8px 12px' }}>
+                        {district.temples.map((temple, idx) => (
+                          <li key={idx} style={{ padding: '6px 0', borderBottom: '1px solid #f5f5f5' }}>
+                            <button
+                              onClick={() => { setMobileMenuOpen(false); setActiveTemple(temple); focusOnTemple(temple.coordinates.lat, temple.coordinates.lng, temple); setModalContent(temple); setTempleOpen(true); }}
+                              style={{ background: 'transparent', border: 'none', textAlign: 'left', width: '100%', cursor: 'pointer' }}
+                            >
+                              {t('zamorins')} {lang === 'ml' ? (temple.name_ml || toMlName(temple.name)) : temple.name}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  ))}
+                </div>
+              </div>
+
+              {/* Trustees */}
+              <div style={{ marginTop: 10 }}>
+                <h4 style={{ margin: '8px 0' }}>{t('trustees')}</h4>
+                <div style={{ border: '1px solid #eee', borderRadius: 6, padding: '8px 12px' }}>
+                  {truste.map((tr, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
+                      <img src={tr.image} alt={tr.name} style={{ width: 40, height: 48, objectFit: 'cover', borderRadius: 4 }} />
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <strong style={{ fontSize: 14 }}>{tr.name}</strong>
+                        <span style={{ fontSize: 12, color: '#666' }}>{tr.position}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </nav>
         </div>
@@ -1181,34 +1230,16 @@ const renderAccordionTwo = () => {
         </div>
       )}
 
-      {/* Modal */}
-      <div id="modal" ref={modalRef} style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'none',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000
-      }}>
-        {
-          console.log("modalContenrt",modalContent)
-        }
-        
-        <div className="temple-modal">
-        <Slideshow slides={modalContent?.slides}/>
-          <h2 style={{ fontSize: lang === 'ml' ? '1.05rem' : '1.15rem' }}>{t('zamorins')} {lang === 'ml' ? (modalContent?.name_ml || toMlName(modalContent?.name)) : modalContent?.name}</h2>
-          <p style={{ fontSize: lang === 'ml' ? '0.95rem' : '1rem' }}>{lang === 'ml' ? (modalContent?.details_ml || toMlDetails(modalContent?.details)) : modalContent?.details}</p>
-          {/* Add a Directions button */}
-          <button style={{ backgroundColor: '#E68057', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer' }} onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${modalContent?.coordinates.lat},${modalContent?.coordinates.lng}`, '_blank')}>
-            Get Directions
-          </button>
-          <button style={{ backgroundColor: '#a2574f', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer', marginLeft: '10px' }} onClick={closeModal}>Close</button>
-        </div>
-      </div>
+      {/* Temple details modal */}
+      <TempleDetailsModal
+        isOpen={templeOpen}
+        onClose={() => setTempleOpen(false)}
+        temple={modalContent}
+        lang={lang}
+        t={t}
+        toMlName={toMlName}
+        toMlDetails={toMlDetails}
+      />
 
       {/* Trip Planner Modal */}
       <TripPlannerModal
