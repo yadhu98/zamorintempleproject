@@ -14,7 +14,6 @@ const Backdrop = ({ children, onClose }) => (
     onClick={(e) => {
       if (e.target === e.currentTarget) onClose();
     }}
-    onWheel={(e) => { e.stopPropagation(); }}
     onTouchMove={(e) => { e.stopPropagation(); }}
     onScroll={(e) => { e.stopPropagation(); }}
     style={{
@@ -37,6 +36,8 @@ export default function TripPlannerModal({ isOpen, onClose, data, onPlan, hasLoc
   const [search, setSearch] = useState('');
   const [optimizeBy, setOptimizeBy] = useState('time'); // 'time' | 'distance'
   const [selectedKeys, setSelectedKeys] = useState(new Set());
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [recent, setRecent] = useState([]);
   const [addrQuery, setAddrQuery] = useState('');
   const [addrResults, setAddrResults] = useState([]);
   const [addrLoading, setAddrLoading] = useState(false);
@@ -44,6 +45,7 @@ export default function TripPlannerModal({ isOpen, onClose, data, onPlan, hasLoc
   const [addrChosenLabel, setAddrChosenLabel] = useState('');
   const [isSmall, setIsSmall] = useState(() => typeof window !== 'undefined' ? window.matchMedia('(max-width: 768px)').matches : false);
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -51,7 +53,16 @@ export default function TripPlannerModal({ isOpen, onClose, data, onPlan, hasLoc
       setSearch('');
       setOptimizeBy('time');
       setSelectedKeys(new Set());
+      setSuggestOpen(false);
     }
+  }, [isOpen]);
+
+  // Load recent selections from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('zp_recent_temples');
+      if (raw) setRecent(JSON.parse(raw));
+    } catch {}
   }, [isOpen]);
 
   // Lock body scroll when modal open to prevent background (map) scroll
@@ -112,6 +123,25 @@ export default function TripPlannerModal({ isOpen, onClose, data, onPlan, hasLoc
     return () => clearTimeout(id);
   }, [search]);
 
+  // Suggest list based on search
+  const suggestions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return templesFlat
+      .filter(t => t.name.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [search, templesFlat]);
+
+  const writeRecent = (templ) => {
+    try {
+      const r = [{ name: templ.name, district: templ.district, coordinates: templ.coordinates, key: templ.key }]
+        .concat(recent.filter(x => x.key !== templ.key))
+        .slice(0, 6);
+      setRecent(r);
+      localStorage.setItem('zp_recent_temples', JSON.stringify(r));
+    } catch {}
+  };
+
   const toggleKey = (key) => {
     setSelectedKeys((prev) => {
       const next = new Set(prev);
@@ -119,6 +149,8 @@ export default function TripPlannerModal({ isOpen, onClose, data, onPlan, hasLoc
       else next.add(key);
       return next;
     });
+    const templ = templesFlat.find(t => t.key === key);
+    if (templ) writeRecent(templ);
   };
 
   const selectAllFiltered = () => {
@@ -161,6 +193,7 @@ export default function TripPlannerModal({ isOpen, onClose, data, onPlan, hasLoc
 
   const LBL = lang === 'ml'
     ? {
+  filters: 'ഫിൽട്ടറുകൾ',
         district: 'ജില്ല',
         search: 'തിരയുക',
         optimizeBy: 'ഓപ്റ്റിമൈസ് ചെയ്യുക',
@@ -183,6 +216,7 @@ export default function TripPlannerModal({ isOpen, onClose, data, onPlan, hasLoc
         using: 'ഉപയോഗിക്കുന്നത്',
       }
     : {
+  filters: 'Filters',
         district: 'District',
         search: 'Search',
         optimizeBy: 'Optimize by',
@@ -270,68 +304,212 @@ export default function TripPlannerModal({ isOpen, onClose, data, onPlan, hasLoc
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer' }}>✕</button>
         </div>
 
-  <div className="tp-body" style={{ padding: 16, display: 'grid', gap: 16, overflow: 'hidden', flex: 1, minHeight: 0 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <label style={{ fontWeight: 600 }}>{LBL.district}</label>
-            <select value={districtFilter} onChange={(e) => setDistrictFilter(e.target.value)} style={{ padding: 8 }}>
-              {districts.map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
+  <div
+    className="tp-body"
+    style={{
+      padding: 16,
+      display: isSmall ? 'flex' : 'grid',
+      flexDirection: isSmall ? 'column' : undefined,
+      gap: 16,
+      overflow: 'hidden',
+      flex: 1,
+      minHeight: 0,
+      gridTemplateColumns: isSmall ? undefined : '260px 1fr',
+    }}
+  >
+          {!isSmall && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <label style={{ fontWeight: 600 }}>{LBL.district}</label>
+              <select value={districtFilter} onChange={(e) => setDistrictFilter(e.target.value)} style={{ padding: 8 }}>
+                {districts.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
 
-            <label style={{ fontWeight: 600 }}>{LBL.search}</label>
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={lang === 'ml' ? 'ക്ഷേത്രം/വിവരം' : 'Temple name or details'} style={{ padding: 8 }} />
-
-            <label style={{ fontWeight: 600 }}>{LBL.optimizeBy}</label>
-            <div>
-              <label style={{ marginRight: 12 }}>
-                <input type="radio" name="opt" checked={optimizeBy === 'time'} onChange={() => setOptimizeBy('time')} /> {LBL.time}
-              </label>
-              <label>
-                <input type="radio" name="opt" checked={optimizeBy === 'distance'} onChange={() => setOptimizeBy('distance')} /> {LBL.distance}
-              </label>
-            </div>
-
-            <div style={{ marginTop: 8, padding: 8, border: '1px solid #eee', borderRadius: 6 }}>
-              <div style={{ fontWeight: 600, marginBottom: 6 }}>{LBL.startLoc}</div>
-              {hasLocation ? (
-                <div style={{ color: '#2e7d32' }}>{lang === 'ml' ? 'നിങ്ങളുടെ ലൊക്കേഷൻ സജ്ജമാണ്' : 'Your current location is set.'}</div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ color: '#a2574f' }}>{LBL.locationNA}.</div>
-                  <button onClick={onRequestLocation} style={{ background: '#a2574f', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}>{LBL.useMyLoc}</button>
-                </div>
-              )}
-              <div style={{ marginTop: 8 }}>
-                <div style={{ marginBottom: 6, fontWeight: 600 }}>{LBL.typeAddress}</div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input value={addrQuery} onChange={(e) => setAddrQuery(e.target.value)} placeholder={LBL.typeAddress} style={{ flex: 1, padding: 8 }} />
-                  <button onClick={doGeocode} style={{ background: '#E68057', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}>{addrLoading ? (lang === 'ml' ? 'തിരയുന്നു…' : 'Searching…') : LBL.searchBtn}</button>
-                </div>
-                {addrError && <div style={{ color: '#b71c1c', marginTop: 6 }}>{addrError}</div>}
-                {addrChosenLabel && <div style={{ color: '#2e7d32', marginTop: 6 }}>{LBL.using}: {addrChosenLabel}</div>}
-                {addrResults.length > 0 && (
-                  <div style={{ marginTop: 8, border: '1px solid #eee', borderRadius: 6, maxHeight: 140, overflow: 'auto' }}>
-                    {addrResults.map((r, idx) => (
-                      <div key={idx} style={{ padding: 8, cursor: 'pointer' }}
-                        onClick={() => { onSetStartLocation?.({ lat: r.lat, lng: r.lng }); setAddrChosenLabel(r.label); setAddrResults([]); }}
-                        onKeyDown={() => {}}
-                        tabIndex={0}
-                      >
-                        {r.label}
+              <label style={{ fontWeight: 600 }}>{LBL.search}</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setSuggestOpen(true); }}
+                  onFocus={() => setSuggestOpen(true)}
+                  placeholder={lang === 'ml' ? 'ക്ഷേത്രം/വിവരം' : 'Temple name or details'}
+                  style={{ padding: 8, width: '100%' }}
+                />
+                {suggestOpen && (suggestions.length > 0 || (!search && recent.length > 0)) && (
+                  <div className="fade-slide-in" style={{ position: 'absolute', top: '110%', left: 0, right: 0, background: '#fff', border: '1px solid #eee', borderRadius: 6, boxShadow: '0 8px 20px rgba(0,0,0,0.08)', zIndex: 5, maxHeight: 220, overflow: 'auto' }}>
+                    {search && suggestions.length > 0 && suggestions.map(s => (
+                      <div key={s.key} style={{ padding: '8px 10px', cursor: 'pointer' }} onMouseDown={() => { toggleKey(s.key); setSuggestOpen(false); }}>
+                        {lang === 'ml' ? toMlName(s.name) : s.name} <span style={{ color: '#666', fontSize: 12 }}>• {lang === 'ml' ? toMlDistrict(s.district) : s.district}</span>
+                      </div>
+                    ))}
+                    {!search && recent.length > 0 && (
+                      <div style={{ padding: '6px 10px', fontSize: 12, color: '#666' }}>{lang === 'ml' ? 'ഇപ്പോൾ തിരഞ്ഞെടുത്തത്' : 'Recent selections'}</div>
+                    )}
+                    {!search && recent.map(r => (
+                      <div key={r.key} style={{ padding: '8px 10px', cursor: 'pointer' }} onMouseDown={() => { toggleKey(r.key); setSuggestOpen(false); }}>
+                        {lang === 'ml' ? toMlName(r.name) : r.name} <span style={{ color: '#666', fontSize: 12 }}>• {lang === 'ml' ? toMlDistrict(r.district) : r.district}</span>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-            </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={selectAllFiltered} style={{ background: '#eee', border: '1px solid #ccc', padding: '6px 8px', borderRadius: 4, cursor: 'pointer' }}>{LBL.selectAll}</button>
-              <button onClick={clearSelection} style={{ background: '#eee', border: '1px solid #ccc', padding: '6px 8px', borderRadius: 4, cursor: 'pointer' }}>{LBL.clear}</button>
-            </div>
-          </div>
+              <label style={{ fontWeight: 600 }}>{LBL.optimizeBy}</label>
+              <div>
+                <label style={{ marginRight: 12 }}>
+                  <input type="radio" name="opt" checked={optimizeBy === 'time'} onChange={() => setOptimizeBy('time')} /> {LBL.time}
+                </label>
+                <label>
+                  <input type="radio" name="opt" checked={optimizeBy === 'distance'} onChange={() => setOptimizeBy('distance')} /> {LBL.distance}
+                </label>
+              </div>
 
+              <div style={{ marginTop: 8, padding: 8, border: '1px solid #eee', borderRadius: 6 }}>
+                <div style={{ fontWeight: 600, marginBottom: 6 }}>{LBL.startLoc}</div>
+                {hasLocation ? (
+                  <div style={{ color: '#2e7d32' }}>{lang === 'ml' ? 'നിങ്ങളുടെ ലൊക്കേഷൻ സജ്ജമാണ്' : 'Your current location is set.'}</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ color: '#a2574f' }}>{LBL.locationNA}.</div>
+                    <button onClick={onRequestLocation} style={{ background: '#a2574f', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}>{LBL.useMyLoc}</button>
+                  </div>
+                )}
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ marginBottom: 6, fontWeight: 600 }}>{LBL.typeAddress}</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input value={addrQuery} onChange={(e) => setAddrQuery(e.target.value)} placeholder={LBL.typeAddress} style={{ flex: 1, padding: 8 }} />
+                    <button onClick={doGeocode} style={{ background: '#E68057', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}>{addrLoading ? (lang === 'ml' ? 'തിരയുന്നു…' : 'Searching…') : LBL.searchBtn}</button>
+                  </div>
+                  {addrError && <div style={{ color: '#b71c1c', marginTop: 6 }}>{addrError}</div>}
+                  {addrChosenLabel && <div style={{ color: '#2e7d32', marginTop: 6 }}>{LBL.using}: {addrChosenLabel}</div>}
+                  {addrResults.length > 0 && (
+                    <div style={{ marginTop: 8, border: '1px solid #eee', borderRadius: 6, maxHeight: 140, overflow: 'auto' }}>
+                      {addrResults.map((r, idx) => (
+                        <div key={idx} style={{ padding: 8, cursor: 'pointer' }}
+                          onClick={() => { onSetStartLocation?.({ lat: r.lat, lng: r.lng }); setAddrChosenLabel(r.label); setAddrResults([]); }}
+                          onKeyDown={() => {}}
+                          tabIndex={0}
+                        >
+                          {r.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={selectAllFiltered} style={{ background: '#eee', border: '1px solid #ccc', padding: '6px 8px', borderRadius: 4, cursor: 'pointer' }}>{LBL.selectAll}</button>
+                <button onClick={clearSelection} style={{ background: '#eee', border: '1px solid #ccc', padding: '6px 8px', borderRadius: 4, cursor: 'pointer' }}>{LBL.clear}</button>
+              </div>
+            </div>
+          )}
+
+          {isSmall && (
+            <div style={{ border: '1px solid #eee', borderRadius: 6, overflow: 'hidden' }}>
+              <button
+                onClick={() => setFiltersOpen((v) => !v)}
+                style={{ width: '100%', textAlign: 'left', background: '#E68057', color: '#fff', border: 'none', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 }}
+              >
+                {LBL.filters}
+              </button>
+              {filtersOpen && (
+                <div
+                  style={{ padding: 12, background: '#f9f9f9', maxHeight: '35vh', overflow: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+                  onWheel={(e) => e.stopPropagation()}
+                  onTouchMove={(e) => e.stopPropagation()}
+                  onScroll={(e) => e.stopPropagation()}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <label style={{ fontWeight: 600 }}>{LBL.district}</label>
+                    <select value={districtFilter} onChange={(e) => setDistrictFilter(e.target.value)} style={{ padding: 8 }}>
+                      {districts.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+
+                    <label style={{ fontWeight: 600 }}>{LBL.search}</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        value={search}
+                        onChange={(e) => { setSearch(e.target.value); setSuggestOpen(true); }}
+                        onFocus={() => setSuggestOpen(true)}
+                        placeholder={lang === 'ml' ? 'ക്ഷേത്രം/വിവരം' : 'Temple name or details'}
+                        style={{ padding: 8, width: '100%' }}
+                      />
+                      {suggestOpen && (suggestions.length > 0 || (!search && recent.length > 0)) && (
+                        <div className="fade-slide-in" style={{ position: 'absolute', top: '110%', left: 0, right: 0, background: '#fff', border: '1px solid #eee', borderRadius: 6, boxShadow: '0 8px 20px rgba(0,0,0,0.08)', zIndex: 5, maxHeight: 220, overflow: 'auto' }}>
+                          {search && suggestions.length > 0 && suggestions.map(s => (
+                            <div key={s.key} style={{ padding: '8px 10px', cursor: 'pointer' }} onMouseDown={() => { toggleKey(s.key); setSuggestOpen(false); }}>
+                              {lang === 'ml' ? toMlName(s.name) : s.name} <span style={{ color: '#666', fontSize: 12 }}>• {lang === 'ml' ? toMlDistrict(s.district) : s.district}</span>
+                            </div>
+                          ))}
+                          {!search && recent.length > 0 && (
+                            <div style={{ padding: '6px 10px', fontSize: 12, color: '#666' }}>{lang === 'ml' ? 'ഇപ്പോൾ തിരഞ്ഞെടുത്തത്' : 'Recent selections'}</div>
+                          )}
+                          {!search && recent.map(r => (
+                            <div key={r.key} style={{ padding: '8px 10px', cursor: 'pointer' }} onMouseDown={() => { toggleKey(r.key); setSuggestOpen(false); }}>
+                              {lang === 'ml' ? toMlName(r.name) : r.name} <span style={{ color: '#666', fontSize: 12 }}>• {lang === 'ml' ? toMlDistrict(r.district) : r.district}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <label style={{ fontWeight: 600 }}>{LBL.optimizeBy}</label>
+                    <div>
+                      <label style={{ marginRight: 12 }}>
+                        <input type="radio" name="opt" checked={optimizeBy === 'time'} onChange={() => setOptimizeBy('time')} /> {LBL.time}
+                      </label>
+                      <label>
+                        <input type="radio" name="opt" checked={optimizeBy === 'distance'} onChange={() => setOptimizeBy('distance')} /> {LBL.distance}
+                      </label>
+                    </div>
+
+                    <div style={{ marginTop: 8, padding: 8, border: '1px solid #eee', borderRadius: 6 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 6 }}>{LBL.startLoc}</div>
+                      {hasLocation ? (
+                        <div style={{ color: '#2e7d32' }}>{lang === 'ml' ? 'നിങ്ങളുടെ ലൊക്കേഷൻ സജ്ജമാണ്' : 'Your current location is set.'}</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <div style={{ color: '#a2574f' }}>{LBL.locationNA}.</div>
+                          <button onClick={onRequestLocation} style={{ background: '#a2574f', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}>{LBL.useMyLoc}</button>
+                        </div>
+                      )}
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ marginBottom: 6, fontWeight: 600 }}>{LBL.typeAddress}</div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input value={addrQuery} onChange={(e) => setAddrQuery(e.target.value)} placeholder={LBL.typeAddress} style={{ flex: 1, padding: 8 }} />
+                          <button onClick={doGeocode} style={{ background: '#E68057', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: 4, cursor: 'pointer' }}>{addrLoading ? (lang === 'ml' ? 'തിരയുന്നു…' : 'Searching…') : LBL.searchBtn}</button>
+                        </div>
+                        {addrError && <div style={{ color: '#b71c1c', marginTop: 6 }}>{addrError}</div>}
+                        {addrChosenLabel && <div style={{ color: '#2e7d32', marginTop: 6 }}>{LBL.using}: {addrChosenLabel}</div>}
+                        {addrResults.length > 0 && (
+                          <div style={{ marginTop: 8, border: '1px solid #eee', borderRadius: 6, maxHeight: 140, overflow: 'auto' }}>
+                            {addrResults.map((r, idx) => (
+                              <div key={idx} style={{ padding: 8, cursor: 'pointer' }}
+                                onClick={() => { onSetStartLocation?.({ lat: r.lat, lng: r.lng }); setAddrChosenLabel(r.label); setAddrResults([]); }}
+                                onKeyDown={() => {}}
+                                tabIndex={0}
+                              >
+                                {r.label}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={selectAllFiltered} style={{ background: '#eee', border: '1px solid #ccc', padding: '6px 8px', borderRadius: 4, cursor: 'pointer' }}>{LBL.selectAll}</button>
+                      <button onClick={clearSelection} style={{ background: '#eee', border: '1px solid #ccc', padding: '6px 8px', borderRadius: 4, cursor: 'pointer' }}>{LBL.clear}</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
           <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1, minHeight: 0 }}>
             <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div><strong>{filteredTemples.length}</strong> {LBL.templesShown} • <strong>{selectedKeys.size}</strong> {LBL.selected}</div>
@@ -347,7 +525,7 @@ export default function TripPlannerModal({ isOpen, onClose, data, onPlan, hasLoc
             </div>
             <div
               className="table-wrap"
-              style={{ overflow: 'auto', border: '1px solid #eee', borderRadius: 6, flex: 1, minHeight: 0, overscrollBehavior: 'contain' }}
+              style={{ overflow: 'auto', border: '1px solid #eee', borderRadius: 6, flex: 1, minHeight: 0, overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
               onScroll={(e) => e.stopPropagation()}

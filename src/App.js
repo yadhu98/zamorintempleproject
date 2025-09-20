@@ -153,14 +153,6 @@ function App() {
   const [lang, setLang] = useState('en'); // 'en' | 'ml'
   const [helpOpen, setHelpOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const onKey = (e) => { if (e.key === 'Escape') setMobileMenuOpen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [mobileMenuOpen]);
-
   // Navigation + guidance state
   const [routeInfo, setRouteInfo] = useState(null); // { route, orderedPoints }
   const [navIdx, setNavIdx] = useState({ leg: 0, step: 0 });
@@ -173,6 +165,16 @@ function App() {
   const [dwellOverrides, setDwellOverrides] = useState({}); // {1: 60, 2: 45, ...}
   const [etaSchedule, setEtaSchedule] = useState([]);
   const navUserDotRef = useRef(null);
+  // UI: summary and loading
+  const [summaryExpanded, setSummaryExpanded] = useState(true);
+  const [planning, setPlanning] = useState(false);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setMobileMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileMenuOpen]);
 
   const i18n = useMemo(() => ({
     en: {
@@ -548,6 +550,7 @@ function App() {
       acquireLocation();
       return;
     }
+    setPlanning(true);
     try {
       // Clear any existing route
       if (routeLayer) {
@@ -671,6 +674,8 @@ function App() {
     } catch (err) {
       console.error('Failed to plan trip', err);
       alert('Failed to plan trip. Please try again.');
+    } finally {
+      setPlanning(false);
     }
   };
 
@@ -706,6 +711,7 @@ function App() {
     if (!userLocation) { acquireLocation(); return; }
     if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
     setNavActive(true);
+    setSummaryExpanded(false); // minimize summary to prioritize map
 
     // Ensure user dot marker exists
     if (!navUserDotRef.current) {
@@ -810,6 +816,7 @@ function App() {
 
   const stopNavigation = () => {
     setNavActive(false);
+    // keep user's last preference; do not force expand
     if (navWatchIdRef.current != null) { navigator.geolocation.clearWatch(navWatchIdRef.current); navWatchIdRef.current = null; }
     if (headingMarkerRef.current) { try { leafletMap.current.removeLayer(headingMarkerRef.current); } catch {} headingMarkerRef.current = null; }
     if (currentStepLayerRef.current) { try { leafletMap.current.removeLayer(currentStepLayerRef.current); } catch {} currentStepLayerRef.current = null; }
@@ -998,13 +1005,20 @@ const renderAccordionTwo = () => {
 
   return (
     <div className="app" style={{ fontSize: lang === 'ml' ? '0.95rem' : '1rem' }}>
+      {/* loader overlay during planning */}
+      {planning && (
+        <div className="planning-overlay" aria-live="polite" role="status">
+          <div className="spinner" />
+          <div className="planning-text">Calculating the best route…</div>
+        </div>
+      )}
       <header className="app-header" style={{ backgroundColor: '#E68057', color: 'white', textAlign: 'center', padding: '1rem' , display :'flex',alignItems: 'center',justifyContent : 'space-between'}}>
         <div className="brand" style={{display : 'flex', alignItems:'center', gap: 8}}>
           <img src={zLogo} style={{width : "80px" , height : '60px'}} alt="Zamorin Logo"/>
           <h3 className="app-title" style={{ margin: 0, fontSize: lang === 'ml' ? '1.05rem' : '1.15rem' }}>{t('appTitle')}</h3>
         </div>
-        <button className="hamburger" aria-label="Menu" onClick={() => setMobileMenuOpen(true)} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer', display: 'none' }}>☰</button>
-        <div className="header-actions" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+  <button className="hamburger" aria-label="Menu" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer' }}>☰</button>
+  <div className="header-actions">
           <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ backgroundColor: '#fff', color: '#333', border: 'none', borderRadius: '4px', padding: '0.5rem 0.8rem', cursor: 'pointer' }}>
             <option value="en">English</option>
             <option value="ml">മലയാളം</option>
@@ -1018,11 +1032,11 @@ const renderAccordionTwo = () => {
       {mobileMenuOpen && (
         <div className="mobile-menu-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setMobileMenuOpen(false); }}>
           <nav className="mobile-menu" role="menu" aria-label="Main menu">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
               <strong>{t('appTitle')}</strong>
-              <button onClick={() => setMobileMenuOpen(false)} aria-label="Close menu" style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
+              {/* <button onClick={() => setMobileMenuOpen(false)} aria-label="Close menu" style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button> */}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10,alignItems: 'stretch' ,padding: '0 12px'}}>
               <select value={lang} onChange={(e) => { setLang(e.target.value); setMobileMenuOpen(false); }} style={{ backgroundColor: '#fff', color: '#333', border: '1px solid #ddd', borderRadius: 6, padding: '10px 12px', cursor: 'pointer' }}>
                 <option value="en">English</option>
                 <option value="ml">മലയാളം</option>
@@ -1077,70 +1091,91 @@ const renderAccordionTwo = () => {
 
       {/* Route summary overlay */}
       {routeSummary && (
-        <div className="route-summary" style={{ position: 'fixed', right: 16, bottom: 16, background: '#fff', borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.15)', padding: '12px 14px', zIndex: 1200, minWidth: 260 }}>
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>{t('summary')}</div>
-          <div>{t('distance')}: {routeSummary.distanceKm.toFixed(1)} km</div>
-          <div>{t('eta')}: {Math.round(routeSummary.durationMin)} min</div>
+        <div
+          className={`route-summary ${summaryExpanded ? 'expanded' : 'minimized'}`}
+          onClick={() => { if (!summaryExpanded) setSummaryExpanded(true); }}
+          style={{ position: 'fixed', right: 16, bottom: 16, background: '#fff', borderRadius: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.15)', padding: summaryExpanded ? '12px 14px' : '8px 10px', zIndex: 1200, minWidth: 260, cursor: !summaryExpanded ? 'pointer' : 'default' }}
+        >
+          <div className="summary-handle" onClick={(e) => { e.stopPropagation(); setSummaryExpanded((v) => !v); }} aria-label="Toggle summary" title="Toggle summary" />
 
-          {/* Next-turn guidance */}
-          {navActive && routeInfo?.route?.legs && (
-            <div aria-live="polite" role="status" style={{ marginTop: 8, padding: 8, background: '#f6f8fa', borderRadius: 6 }}>
-              <div style={{ fontWeight: 600 }}>{nextTurnText || 'Follow route'}</div>
-              {nextTurnDistM != null && <div>{formatDist(nextTurnDistM)} to next turn</div>}
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
-                <input type="checkbox" checked={voiceEnabled} onChange={(e) => setVoiceEnabled(e.target.checked)} /> Voice guidance
-              </label>
-            </div>
-          )}
+          {summaryExpanded ? (
+            <>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>{t('summary')}</div>
+              <div>{t('distance')}: {routeSummary.distanceKm.toFixed(1)} km</div>
+              <div>{t('eta')}: {Math.round(routeSummary.durationMin)} min</div>
 
-          {/* Actions */}
-          <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button onClick={() => { if (routeLayer) { leafletMap.current.removeLayer(routeLayer); setRouteLayer(null); } setRouteSummary(null); setRouteInfo(null); setEtaSchedule([]); }} style={{ background: '#eee', border: '1px solid #ccc', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('clear')}</button>
-            {routeLayer && (
-              <button onClick={() => leafletMap.current.fitBounds(routeLayer.getBounds())} style={{ background: '#E68057', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('fit')}</button>
-            )}
-            <button onClick={exportToGoogleMaps} style={{ background: '#1a73e8', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('openInGMaps')}</button>
-          </div>
-          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-            {!navActive ? (
-              <button onClick={startNavigation} style={{ background: '#2e7d32', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('startNav')}</button>
-            ) : (
-              <button onClick={stopNavigation} style={{ background: '#b71c1c', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('stopNav')}</button>
-            )}
-          </div>
-
-          {/* Dwell and ETA controls */}
-          {routeInfo?.route?.legs && (
-            <div style={{ marginTop: 10, borderTop: '1px solid #eee', paddingTop: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <label>Per-stop time (min)</label>
-                <input type="number" min={0} max={600} value={dwellDefaultMin} onChange={(e) => setDwellDefaultMin(parseInt(e.target.value || '0', 10))} style={{ width: 80 }} />
-              </div>
-              {etaSchedule.length > 0 && (
-                <div style={{ maxHeight: 160, overflow: 'auto', border: '1px solid #eee', borderRadius: 6, padding: 8 }}>
-                  {etaSchedule.map((s, ix) => (
-                    <div key={ix} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: 8, alignItems: 'center', marginBottom: 6 }}>
-                      <div>
-                        Stop {s.stopNumber}: {(() => {
-                          // show temple name for stop
-                          if (!routeSummary?.order || !plannedPoints) return '';
-                          const ordIdx = routeSummary.order[s.stopNumber];
-                          const pt = plannedPoints[ordIdx];
-                          // find temple by coordinates
-                          let name = '';
-                          data.forEach(d => d.temples.forEach(t => { if (Math.abs(t.coordinates.lat - pt.lat) < 1e-6 && Math.abs(t.coordinates.lng - pt.lng) < 1e-6) name = t.name; }));
-                          return name;
-                        })()}
-                      </div>
-                      <div title={`Arrive ~ ${s.arrival.toLocaleTimeString()}`}>ETA: {s.arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <input type="number" min={0} max={600} value={dwellOverrides[s.stopNumber] ?? ''} placeholder={dwellDefaultMin} onChange={(e) => setDwellOverrides((prev) => ({ ...prev, [s.stopNumber]: e.target.value === '' ? undefined : parseInt(e.target.value || '0', 10) }))} style={{ width: 64 }} />
-                        <span>min</span>
-                      </div>
-                    </div>
-                  ))}
+              {navActive && routeInfo?.route?.legs && (
+                <div aria-live="polite" role="status" style={{ marginTop: 8, padding: 8, background: '#f6f8fa', borderRadius: 6 }}>
+                  <div style={{ fontWeight: 600 }}>{nextTurnText || 'Follow route'}</div>
+                  {nextTurnDistM != null && <div>{formatDist(nextTurnDistM)} to next turn</div>}
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                    <input type="checkbox" checked={voiceEnabled} onChange={(e) => setVoiceEnabled(e.target.checked)} /> Voice guidance
+                  </label>
                 </div>
               )}
+
+              <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button onClick={() => { if (routeLayer) { leafletMap.current.removeLayer(routeLayer); setRouteLayer(null); } setRouteSummary(null); setRouteInfo(null); setEtaSchedule([]); }} style={{ background: '#eee', border: '1px solid #ccc', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('clear')}</button>
+                {routeLayer && (
+                  <button onClick={() => leafletMap.current.fitBounds(routeLayer.getBounds())} style={{ background: '#E68057', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('fit')}</button>
+                )}
+                <button onClick={exportToGoogleMaps} style={{ background: '#1a73e8', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('openInGMaps')}</button>
+              </div>
+              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                {!navActive ? (
+                  <button onClick={startNavigation} style={{ background: '#2e7d32', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('startNav')}</button>
+                ) : (
+                  <button onClick={stopNavigation} style={{ background: '#b71c1c', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('stopNav')}</button>
+                )}
+              </div>
+
+              {routeInfo?.route?.legs && (
+                <div style={{ marginTop: 10, borderTop: '1px solid #eee', paddingTop: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <label>Per-stop time (min)</label>
+                    <input type="number" min={0} max={600} value={dwellDefaultMin} onChange={(e) => setDwellDefaultMin(parseInt(e.target.value || '0', 10))} style={{ width: 80 }} />
+                  </div>
+                  {etaSchedule.length > 0 && (
+                    <div style={{ maxHeight: 160, overflow: 'auto', border: '1px solid #eee', borderRadius: 6, padding: 8 }}>
+                      {etaSchedule.map((s, ix) => (
+                        <div key={ix} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                          <div>
+                            Stop {s.stopNumber}: {(() => {
+                              // show temple name for stop
+                              if (!routeSummary?.order || !plannedPoints) return '';
+                              const ordIdx = routeSummary.order[s.stopNumber];
+                              const pt = plannedPoints[ordIdx];
+                              // find temple by coordinates
+                              let name = '';
+                              data.forEach(d => d.temples.forEach(t => { if (Math.abs(t.coordinates.lat - pt.lat) < 1e-6 && Math.abs(t.coordinates.lng - pt.lng) < 1e-6) name = t.name; }));
+                              return name;
+                            })()}
+                          </div>
+                          <div title={`Arrive ~ ${s.arrival.toLocaleTimeString()}`}>ETA: {s.arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <input type="number" min={0} max={600} value={dwellOverrides[s.stopNumber] ?? ''} placeholder={dwellDefaultMin} onChange={(e) => setDwellOverrides((prev) => ({ ...prev, [s.stopNumber]: e.target.value === '' ? undefined : parseInt(e.target.value || '0', 10) }))} style={{ width: 64 }} />
+                            <span>min</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="summary-mini">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div className="mini-dot" />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <strong>{t('summary')}</strong>
+                  {navActive && (
+                    <span style={{ fontSize: 12, color: '#555' }}>
+                      {(nextTurnText || 'Follow route') + (nextTurnDistM != null ? ` • ${formatDist(nextTurnDistM)}` : '')}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
