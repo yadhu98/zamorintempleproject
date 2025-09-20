@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 import zLogo from './images/ZamorinLogo-removebg-preview.png'
 import LocImage from './images/locIcon.png';
@@ -8,6 +8,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Slideshow from './ImageSlider';
 import data from './templeData.json'
+import TripPlannerModal from './TripPlannerModal';
+import InfoManual from './InfoManual';
 
 
 // const data = [
@@ -136,6 +138,689 @@ function App() {
   const leafletMap = useRef(null);
   // const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mapPosition, setMapPosition] = useState({ lat: 11.2588, lng: 76.0, zoom: 8 });
+  const [userLocation, setUserLocation] = useState(null); // { lat, lng }
+  const userMarkerRef = useRef(null);
+
+  // Trip planning state
+  const [plannerOpen, setPlannerOpen] = useState(false);
+  const [routeLayer, setRouteLayer] = useState(null);
+  const [routeSummary, setRouteSummary] = useState(null); // { distanceKm, durationMin, order: [idx...] }
+  const [stopMarkers, setStopMarkers] = useState([]); // L.Marker[] for selected stops labels
+  const [navActive, setNavActive] = useState(false);
+  const navWatchIdRef = useRef(null);
+  const headingMarkerRef = useRef(null);
+  const [plannedPoints, setPlannedPoints] = useState(null); // points array used for planning (start + stops)
+  const [lang, setLang] = useState('en'); // 'en' | 'ml'
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setMobileMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileMenuOpen]);
+
+  // Navigation + guidance state
+  const [routeInfo, setRouteInfo] = useState(null); // { route, orderedPoints }
+  const [navIdx, setNavIdx] = useState({ leg: 0, step: 0 });
+  const [nextTurnText, setNextTurnText] = useState('');
+  const [nextTurnDistM, setNextTurnDistM] = useState(null);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const speechRef = useRef(null);
+  const currentStepLayerRef = useRef(null);
+  const [dwellDefaultMin, setDwellDefaultMin] = useState(60);
+  const [dwellOverrides, setDwellOverrides] = useState({}); // {1: 60, 2: 45, ...}
+  const [etaSchedule, setEtaSchedule] = useState([]);
+  const navUserDotRef = useRef(null);
+
+  const i18n = useMemo(() => ({
+    en: {
+      appTitle: "Zamorin's Central Devaswom - Temples",
+      toggleMap: 'Toggle map style',
+      planTrip: 'Plan trip',
+      helpBtn: 'Help',
+  zamorins: "Zamorin's",
+      districts: 'Districts',
+      trustees: 'Trustee',
+      summary: 'Trip summary',
+      distance: 'Distance',
+      eta: 'ETA',
+      clear: 'Clear',
+      fit: 'Fit to route',
+      openInGMaps: 'Open in Google Maps',
+      startNav: 'Start navigation',
+      stopNav: 'Stop navigation',
+      common: { close: 'Close' },
+  help: {
+        title: 'How to use',
+        section: {
+          gettingStarted: 'Getting started',
+          onMap: 'On the map',
+          navigation: 'Navigation',
+          notes: 'Notes',
+        },
+        step: {
+          openPlanner: 'Click “Plan trip”.',
+          setStart: 'Set start: use “Use my location” or type an address and pick a result.',
+          selectTemples: 'Filter/search and select desired temples.',
+          optimize: 'Choose “Optimize by Time” or “Optimize by Distance”.',
+          planRoute: 'Click “Plan route” to draw and label the optimized loop.',
+        },
+        tip: {
+          labels: 'Numbered labels (1..N) indicate the visiting order for selected temples.',
+          summary: 'Use the summary card to Fit route, Open in Google Maps, or Start navigation.',
+          fitClear: '“Clear” removes the route and labels; markers remain available.',
+        },
+        nav: {
+          inApp: '“Start navigation” enables live tracking with a blue arrow that follows your device heading.',
+          google: '“Open in Google Maps” opens the full loop with all selected temples as stops.',
+        },
+        note: {
+          permissions: 'Location permission is required for accurate tracking.',
+          heading: 'Heading requires a mobile device with compass; on desktop the arrow may not rotate.',
+          osrm: 'Routing uses public OSRM; when unavailable, we estimate with straight lines.',
+        },
+      },
+    },
+    ml: {
+      appTitle: "സാമൂതിരിയുടെ സെൻട്രൽ ദേവസ്വം - ക്ഷേത്രങ്ങൾ",
+      toggleMap: 'മാപ്പ് സ്റ്റൈൽ മാറ്റുക',
+      planTrip: 'ട്രിപ്പ് പ്ലാൻ ചെയ്യുക',
+  helpBtn: 'സഹായം',
+  zamorins: 'സാമൂതിരിയുടെ',
+      districts: 'ജില്ലകൾ',
+      trustees: 'ട്രസ്റ്റികൾ',
+      summary: 'യാത്രാ സംഗ്രഹം',
+      distance: 'ദൂരം',
+      eta: 'അഞ്ചുമിനിട്ട് കാലം',
+      clear: 'ക്ലിയർ',
+      fit: 'റൂട്ടിലേക്ക് ഫിറ്റ് ചെയ്യുക',
+      openInGMaps: 'ഗൂഗിള്‍ മാപ്സിൽ തുറക്കുക',
+      startNav: 'നാവിഗേഷൻ ആരംഭിക്കുക',
+      stopNav: 'നാവിഗേഷൻ നിർത്തുക',
+      common: { close: 'അടയ്ക്കുക' },
+  help: {
+        title: 'ഉപയോഗ മാർഗ്ഗ നിർദ്ദേശം',
+        section: {
+          gettingStarted: 'ആരംഭിക്കാൻ',
+          onMap: 'മാപ്പിൽ',
+          navigation: 'ദിശാനിർദ്ദേശം',
+          notes: 'ശ്രദ്ധിക്കേണ്ട കാര്യങ്ങൾ',
+        },
+        step: {
+          openPlanner: '“ട്രിപ്പ് പ്ലാൻ ചെയ്യുക” ക്ലിക്ക് ചെയ്യുക.',
+          setStart: 'സ്റ്റാർട്ട് സജ്ജമാക്കുക: “Use my location” അല്ലെങ്കിൽ വിലാസം ടൈപ്പ് ചെയ്ത് തിരഞ്ഞെടുക്കുക.',
+          selectTemples: 'ഫിൽട്ടർ/തിരയൽ ഉപയോഗിച്ച് ക്ഷേത്രങ്ങൾ തിരഞ്ഞെടുക്കുക.',
+          optimize: '“Time” അല്ലെങ്കിൽ “Distance” ഓപ്റ്റിമൈസേഷൻ തിരഞ്ഞെടുക്കുക.',
+          planRoute: '“Plan route” ക്ലിക്ക് ചെയ്താൽ റൂട്ടും ലേബലുകളും കാണിക്കും.',
+        },
+        tip: {
+          labels: 'ലേബലുകൾ (1..N) സന്ദർശന ക്രമം കാണിക്കുന്നു.',
+          summary: 'സംഗ്രഹ കാർഡ് ഉപയോഗിച്ച് Fit, Google Maps തുറക്കൽ, അല്ലെങ്കിൽ നാവിഗേഷൻ ആരംഭിക്കൽ ചെയ്യാം.',
+          fitClear: '“Clear” അമർത്തിയാൽ റൂട്ട് നീക്കം ചെയ്യും.',
+        },
+        nav: {
+          inApp: '“നാവിഗേഷൻ ആരംഭിക്കുക” അമർത്തിയാൽ ബ്ലൂ ആറോ നിങ്ങളുടെ ദിശയിൽ നീങ്ങും.',
+          google: '“ഗൂഗിള്‍ മാപ്സിൽ തുറക്കുക” അമർത്തിയാൽ മുഴുവൻ യാത്ര അവിടെ തുറക്കും.',
+        },
+        note: {
+          permissions: 'കൃത്യമായ ട്രാക്കിംഗിനായി ലൊക്കേഷൻ അനുമതി ആവശ്യമാണ്.',
+          heading: 'ഹെഡിംഗ് മൊബൈലിൽ ലഭ്യമാണ്; ഡെസ്ക്ടോപ്പിൽ ആറോ തിരിയാതെ ഇരിക്കാം.',
+          osrm: 'റൂട്ടിങ് പൊതുവായ OSRM ഉപയോഗിക്കുന്നു; ലഭ്യമല്ലെങ്കിൽ ഏകദേശ വരകൾ ഉപയോഗിക്കും.',
+        },
+      },
+    },
+  }), []);
+
+  const t = (key) => {
+    const parts = key.split('.');
+    let cur = i18n[lang];
+    for (const p of parts) cur = cur?.[p];
+    return cur ?? key;
+  };
+
+  // Malayalam localization helpers for data strings
+  const toMlDistrict = (d) => {
+    const map = { Kozhikode: 'കോഴിക്കോട്', Malappuram: 'മലപ്പുറം', Palakkad: 'പാലക്കാട്' };
+    return map[d] || d;
+  };
+  const toMlName = (s) => {
+    if (!s) return s;
+    const repl = [
+      ['Sree', 'ശ്രീ'],
+      ['Sri ', 'ശ്രീ '],
+      ['Temple', 'ക്ഷേത്രം'],
+      ['Devaswom', 'ദേവസ്വം'],
+      ['Kshetram', 'ക്ഷേത്രം'],
+      ['Kovil', 'കോവിൽ'],
+      ['Siva', 'ശിവ'],
+      ['Shiva', 'ശിവ'],
+      ['Krishna', 'കൃഷ്ണ'],
+      ['Rama', 'രാമ'],
+      ['Navamukundan', 'നവമുകുന്ദൻ'],
+      ['Ayyappa', 'അയ്യപ്പൻ'],
+      ['Ayyapa', 'അയ്യപ്പൻ'],
+      ['Bhagavathy', 'ഭഗവതി'],
+      ['Devi', 'ദേവി'],
+      ['Mahavishnu', 'മഹാവിഷ്ണു'],
+      ['Vishnu', 'വിഷ്ണു'],
+      ['Narasimham', 'നരസിംഹം'],
+      ['Hanuman', 'ഹനുമാൻ'],
+      ['Swami', 'സ്വാമി'],
+    ];
+    let out = s;
+    repl.forEach(([a, b]) => {
+      out = out.replaceAll(a, b);
+    });
+    return out;
+  };
+  const toMlDetails = (s) => {
+    if (!s) return s;
+    let out = s;
+    out = out.replace('Address:', 'വിലാസം:');
+    out = out.replace('Contact:', 'ബന്ധപ്പെടുക:');
+    out = out.replace('P.O.', 'പി.ഒ.');
+    return out;
+  };
+
+  // Route ordering helpers (Nearest Neighbor + 2-Opt)
+  const nearestNeighborOrder = (matrix) => {
+    const n = matrix.length;
+    const visited = new Array(n).fill(false);
+    const order = [0];
+    visited[0] = true;
+    for (let step = 1; step < n; step++) {
+      const last = order[order.length - 1];
+      let best = -1;
+      let bestVal = Infinity;
+      for (let j = 1; j < n; j++) {
+        if (!visited[j] && matrix[last][j] != null) {
+          const v = matrix[last][j];
+          if (v < bestVal) { bestVal = v; best = j; }
+        }
+      }
+      if (best === -1) break;
+      visited[best] = true;
+      order.push(best);
+    }
+    order.push(0);
+    return order;
+  };
+
+  const twoOpt = (order, matrix) => {
+    const n = order.length;
+    let improved = true;
+    const cost = (i, j) => matrix[i][j] ?? Infinity;
+    const pathCost = (ord) => {
+      let c = 0;
+      for (let i = 0; i < ord.length - 1; i++) c += cost(ord[i], ord[i + 1]);
+      return c;
+    };
+    let bestOrder = order.slice();
+    let bestCost = pathCost(bestOrder);
+    while (improved) {
+      improved = false;
+      for (let i = 1; i < n - 2; i++) {
+        for (let k = i + 1; k < n - 1; k++) {
+          const a = bestOrder[i - 1], b = bestOrder[i];
+          const c2 = bestOrder[k], d = bestOrder[k + 1];
+          const delta = cost(a, c2) + cost(b, d) - (cost(a, b) + cost(c2, d));
+          if (delta < -1e-6) {
+            const newOrder = bestOrder.slice(0, i).concat(bestOrder.slice(i, k + 1).reverse(), bestOrder.slice(k + 1));
+            bestOrder = newOrder;
+            bestCost = bestCost + delta;
+            improved = true;
+          }
+        }
+      }
+    }
+    return bestOrder;
+  };
+
+  const computeTotals = (matrix, order) => {
+    let sum = 0;
+    for (let i = 0; i < order.length - 1; i++) sum += matrix[order[i]][order[i + 1]] ?? 0;
+    return sum;
+  };
+
+  // Acquire browser geolocation
+  const acquireLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported in this browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        setMapPosition({ lat: latitude, lng: longitude, zoom: 12 });
+      },
+      (err) => {
+        console.error('Geolocation error', err);
+        alert('Unable to retrieve your location. Please allow location permission.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    );
+  };
+
+  // Allow manual start location via search
+  const setManualStartLocation = (loc) => {
+    setUserLocation(loc);
+    setMapPosition({ lat: loc.lat, lng: loc.lng, zoom: 12 });
+  };
+
+  // Helpers: distances
+  const toRad = (x) => (x * Math.PI) / 180;
+  const distMeters = (a, b) => {
+    const R = 6371000; // meters
+    const dLat = toRad(b[0] - a[0]);
+    const dLng = toRad(b[1] - a[1]);
+    const lat1 = toRad(a[0]);
+    const lat2 = toRad(b[0]);
+    const aa = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
+    return R * c;
+  };
+
+  const buildCoords = (points) => points.map((p) => `${p.lng},${p.lat}`).join(';');
+
+  const fetchOsrmTable = async (points) => {
+    const base = 'https://router.project-osrm.org/table/v1/driving/';
+    const url = `${base}${buildCoords(points)}?annotations=duration,distance`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('OSRM table failed');
+    const j = await r.json();
+    return j; // { durations, distances }
+  };
+
+  const fetchOsrmRoute = async (orderedPoints) => {
+    const base = 'https://router.project-osrm.org/route/v1/driving/';
+    const coords = buildCoords(orderedPoints);
+    const url = `${base}${coords}?overview=full&geometries=geojson&steps=true&annotations=distance,duration`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('OSRM route failed');
+    const j = await r.json();
+    return j.routes?.[0]; // single best route with legs and steps
+  };
+
+  // Build a readable instruction from an OSRM step
+  const formatInstruction = (step) => {
+    if (!step?.maneuver) return '';
+    const { type, modifier, exit } = step.maneuver;
+    const road = step.name || '';
+    const turnWord = (m) => {
+      if (!m) return '';
+      const map = {
+        left: 'left', right: 'right', straight: 'straight', slight_left: 'slight left', slight_right: 'slight right', uturn: 'U-turn'
+      };
+      return map[m] || m;
+    };
+    switch (type) {
+      case 'depart':
+        return 'Head ' + (turnWord(modifier) || 'on your route');
+      case 'turn':
+        return `Turn ${turnWord(modifier)}${road ? ` onto ${road}` : ''}`;
+      case 'new name':
+        return `Continue${road ? ` onto ${road}` : ''}`;
+      case 'merge':
+        return `Merge${road ? ` onto ${road}` : ''}`;
+      case 'roundabout':
+      case 'rotary':
+        return `At the roundabout, take exit ${exit || ''}${road ? ` onto ${road}` : ''}`;
+      case 'on ramp':
+        return `Take the ramp${road ? ` to ${road}` : ''}`;
+      case 'off ramp':
+        return `Take the exit${road ? ` to ${road}` : ''}`;
+      case 'arrive':
+        return 'Arrive at destination';
+      case 'continue':
+      default:
+        return `Continue${road ? ` on ${road}` : ''}`;
+    }
+  };
+
+  // Compute distance remaining within a step geometry from current lat/lng
+  const stepRemainingMeters = (curLat, curLng, step) => {
+    const coords = step?.geometry?.coordinates;
+    if (!coords || coords.length < 2) return step?.distance ?? 0;
+    // Convert to [lat,lng]
+    const latlngs = coords.map(([lng, lat]) => [lat, lng]);
+    // Find nearest segment index
+    let bestIdx = 0, bestDist = Infinity;
+    for (let i = 0; i < latlngs.length; i++) {
+      const d = distMeters([curLat, curLng], latlngs[i]);
+      if (d < bestDist) { bestDist = d; bestIdx = i; }
+    }
+    // Sum from nearest point to end
+    let sum = distMeters([curLat, curLng], latlngs[Math.min(bestIdx + 1, latlngs.length - 1)]);
+    for (let i = Math.min(bestIdx + 1, latlngs.length - 1); i < latlngs.length - 1; i++) {
+      sum += distMeters(latlngs[i], latlngs[i + 1]);
+    }
+    return Math.min(sum, step?.distance ?? sum);
+  };
+
+  // Compute ETA schedule per stop with dwell times
+  const computeSchedule = (route, order, startDate, dwellMin, overrides) => {
+    if (!route?.legs) return [];
+    const out = [];
+    let t = new Date(startDate);
+    for (let i = 0; i < route.legs.length; i++) {
+      const driveSec = route.legs[i].duration || 0;
+      const arrival = new Date(t.getTime() + driveSec * 1000);
+      // If this leg ends at a temple stop (exclude final return where order idx is 0)
+      const destIdx = order[i + 1];
+      if (destIdx !== 0) {
+        const stopNumber = i + 1; // 1-based stop order
+        const dwell = (overrides?.[stopNumber] ?? dwellMin) * 60; // sec
+        const depart = new Date(arrival.getTime() + dwell * 1000);
+        out.push({ stopNumber, arrival, depart, driveMinutes: Math.round(driveSec / 60) });
+        t = depart; // include dwell before next leg
+      } else {
+        // return to start
+        t = arrival;
+      }
+    }
+    return out;
+  };
+
+  // Display helpers
+  const formatDist = (m) => {
+    if (m == null) return '';
+    if (m >= 1000) return `${(m / 1000).toFixed(m >= 5000 ? 0 : 1)} km`;
+    return `${Math.max(0, Math.round(m))} m`;
+  };
+
+  const haversineKm = (a, b) => {
+    const toRad = (x) => (x * Math.PI) / 180;
+    const R = 6371; // km
+    const dLat = toRad(b.lat - a.lat);
+    const dLng = toRad(b.lng - a.lng);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
+    const aa = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(aa), Math.sqrt(1 - aa));
+    return R * c;
+  };
+
+  const planTrip = async (selectedTemples, optimizeBy) => {
+    if (!userLocation) {
+      acquireLocation();
+      return;
+    }
+    try {
+      // Clear any existing route
+      if (routeLayer) {
+        leafletMap.current.removeLayer(routeLayer);
+        setRouteLayer(null);
+      }
+
+      // Clear old stop labels
+      stopMarkers.forEach((m) => {
+        try { leafletMap.current.removeLayer(m); } catch { /* noop */ }
+      });
+      setStopMarkers([]);
+
+      // Build points with user as first
+      const points = [userLocation, ...selectedTemples.map((t) => ({ lat: t.coordinates.lat, lng: t.coordinates.lng }))];
+
+      // Try OSRM matrix first
+      let matrix, altMatrix;
+      try {
+        const table = await fetchOsrmTable(points);
+        const durations = table.durations; // seconds
+        const distances = table.distances; // meters
+        matrix = optimizeBy === 'time' ? durations : distances;
+        altMatrix = optimizeBy === 'time' ? distances : durations;
+      } catch (e) {
+        console.warn('Falling back to Haversine matrix', e);
+        // Build symmetric matrix in km and seconds (assume 35 km/h avg)
+        const n = points.length;
+        const dist = Array.from({ length: n }, () => Array(n).fill(0));
+        const dur = Array.from({ length: n }, () => Array(n).fill(0));
+        for (let i = 0; i < n; i++) {
+          for (let j = 0; j < n; j++) {
+            if (i === j) continue;
+            const dKm = haversineKm(points[i], points[j]);
+            dist[i][j] = dKm * 1000; // meters
+            dur[i][j] = (dKm / 35) * 3600; // seconds
+          }
+        }
+        matrix = optimizeBy === 'time' ? dur : dist;
+        altMatrix = optimizeBy === 'time' ? dist : dur;
+      }
+
+      // Build initial NN order and improve with 2-opt
+      let order = nearestNeighborOrder(matrix);
+      order = twoOpt(order, matrix);
+
+      // Compute totals based on both matrices for summary
+      const totalPrimary = computeTotals(matrix, order);
+      const totalAlt = computeTotals(altMatrix, order);
+      const distanceMeters = optimizeBy === 'time' ? totalAlt : totalPrimary; // if primary is time, alt is distance
+      const durationSeconds = optimizeBy === 'time' ? totalPrimary : totalAlt;
+
+      // Request OSRM route geometry and steps if possible
+      let layer = null;
+      let osrmRoute = null;
+      try {
+        const orderedPoints = order.map((idx) => points[idx]);
+        // Ensure closed loop
+        if (orderedPoints[0].lat !== orderedPoints[orderedPoints.length - 1].lat || orderedPoints[0].lng !== orderedPoints[orderedPoints.length - 1].lng) {
+          orderedPoints.push(orderedPoints[0]);
+        }
+        osrmRoute = await fetchOsrmRoute(orderedPoints);
+        const geo = osrmRoute?.geometry;
+        if (geo?.coordinates) {
+          const latlngs = geo.coordinates.map(([lng, lat]) => [lat, lng]);
+          layer = L.polyline(latlngs, { color: '#E68057', weight: 5, opacity: 0.9 });
+        }
+      } catch (e) {
+        console.warn('OSRM route geometry failed, fallback to straight lines', e);
+      }
+
+      if (!layer) {
+        const latlngs = order.map((idx) => [points[idx].lat, points[idx].lng]);
+        // ensure closed loop
+        if (latlngs[0][0] !== latlngs[latlngs.length - 1][0] || latlngs[0][1] !== latlngs[latlngs.length - 1][1]) {
+          latlngs.push(latlngs[0]);
+        }
+        layer = L.polyline(latlngs, { color: '#E68057', weight: 4, dashArray: '6 8' });
+      }
+
+      layer.addTo(leafletMap.current);
+      setRouteLayer(layer);
+      leafletMap.current.fitBounds(layer.getBounds(), { padding: [30, 30] });
+
+      // Prefer OSRM totals if available
+      const totalDistance = osrmRoute?.distance ?? (optimizeBy === 'time' ? (computeTotals(altMatrix, order)) : (computeTotals(matrix, order)));
+      const totalDuration = osrmRoute?.duration ?? (optimizeBy === 'time' ? (computeTotals(matrix, order)) : (computeTotals(altMatrix, order)));
+
+      setRouteSummary({
+        distanceKm: (totalDistance || 0) / 1000,
+        durationMin: (totalDuration || 0) / 60,
+        order,
+      });
+      setPlannedPoints(points);
+
+      // Store route info for navigation/ETAs
+      if (osrmRoute) setRouteInfo({ route: osrmRoute, orderedPoints: order.map((idx) => points[idx]), order });
+      else setRouteInfo(null);
+
+      // Compute initial ETA schedule (assume dwellDefault)
+      const schedule = computeSchedule(osrmRoute, order, new Date(), dwellDefaultMin, {});
+      setEtaSchedule(schedule);
+
+      // Add labeled markers for selected stops in visiting order (1..N)
+      const labels = [];
+      const orderedStops = order.slice(1, -1); // exclude the starting point at 0 and last 0
+      orderedStops.forEach((ordIdx, i) => {
+        const p = points[ordIdx];
+        const label = i + 1;
+        const marker = L.marker([p.lat, p.lng], {
+          icon: L.divIcon({
+            className: 'stop-label',
+            html: `<div style="background:#2e7d32;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:600;border:2px solid #fff;box-shadow:0 0 0 1px #2e7d32;">${label}</div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+          })
+        }).addTo(leafletMap.current).bindTooltip(`Stop ${label}`);
+        labels.push(marker);
+      });
+      setStopMarkers(labels);
+    } catch (err) {
+      console.error('Failed to plan trip', err);
+      alert('Failed to plan trip. Please try again.');
+    }
+  };
+
+  // Export planned route to Google Maps with waypoints
+  const exportToGoogleMaps = () => {
+    if (!routeSummary || !plannedPoints) return;
+    const idxs = routeSummary.order;
+    if (idxs.length < 2) return;
+    const originPt = plannedPoints[idxs[0]];
+    const destPt = plannedPoints[idxs[idxs.length - 1]];
+    const wp = idxs.slice(1, -1).map((i) => `${plannedPoints[i].lat},${plannedPoints[i].lng}`).join('|');
+    const origin = `${originPt.lat},${originPt.lng}`;
+    const destination = `${destPt.lat},${destPt.lng}`;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`
+      + (wp ? `&waypoints=${encodeURIComponent(wp)}` : '')
+      + `&travelmode=driving`;
+    window.open(url, '_blank');
+  };
+
+  // Voice helper
+  const speak = (text) => {
+    if (!voiceEnabled || !text) return;
+    try {
+      const utter = new SpeechSynthesisUtterance(text);
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
+      speechRef.current = utter;
+    } catch {}
+  };
+
+  // Navigation mode: live tracking with arrow marker + current step highlight
+  const startNavigation = () => {
+    if (!userLocation) { acquireLocation(); return; }
+    if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+    setNavActive(true);
+
+    // Ensure user dot marker exists
+    if (!navUserDotRef.current) {
+      navUserDotRef.current = L.circleMarker([userLocation.lat, userLocation.lng], {
+        radius: 6, color: '#1976d2', fillColor: '#2196f3', fillOpacity: 0.9, weight: 2,
+      }).addTo(leafletMap.current).bindTooltip('You are here');
+    } else {
+      navUserDotRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+    }
+
+    // Heading arrow setup
+    if (headingMarkerRef.current) {
+      try { leafletMap.current.removeLayer(headingMarkerRef.current); } catch {}
+      headingMarkerRef.current = null;
+    }
+    const arrowIcon = L.divIcon({
+      className: 'heading-arrow',
+      html: '<div style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:18px solid #1976d2;transform:rotate(0deg);"></div>',
+      iconSize: [20, 20], iconAnchor: [10, 10],
+    });
+    headingMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], { icon: arrowIcon, zIndexOffset: 1000 }).addTo(leafletMap.current);
+    leafletMap.current.setView([userLocation.lat, userLocation.lng], 16);
+
+    // Ensure the route line is visible
+    if (!routeLayer && routeInfo?.route?.geometry?.coordinates) {
+      const latlngs = routeInfo.route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+      const layer = L.polyline(latlngs, { color: '#E68057', weight: 5, opacity: 0.9 }).addTo(leafletMap.current);
+      setRouteLayer(layer);
+    }
+
+    // Initialize step pointer and highlight
+    if (routeInfo?.route?.legs?.length) {
+      setNavIdx({ leg: 0, step: 0 });
+      const step0 = routeInfo.route.legs[0].steps?.[0];
+      if (step0?.geometry?.coordinates) {
+        if (currentStepLayerRef.current) { try { leafletMap.current.removeLayer(currentStepLayerRef.current); } catch {} }
+        const latlngs = step0.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+        currentStepLayerRef.current = L.polyline(latlngs, { color: '#1976d2', weight: 6, opacity: 0.9 }).addTo(leafletMap.current);
+      }
+      const instr = formatInstruction(step0);
+      setNextTurnText(instr);
+      setNextTurnDistM(step0?.distance ?? null);
+      speak(instr);
+    }
+
+    navWatchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, heading } = pos.coords;
+        // Update markers
+        if (navUserDotRef.current) navUserDotRef.current.setLatLng([latitude, longitude]);
+        if (headingMarkerRef.current) {
+          headingMarkerRef.current.setLatLng([latitude, longitude]);
+          const el = headingMarkerRef.current.getElement();
+          if (el) { const tri = el.querySelector('div'); if (tri) tri.style.transform = `rotate(${heading || 0}deg)`; }
+        }
+
+        // Update next-turn and advance steps
+        if (routeInfo?.route?.legs?.length) {
+          let { leg, step } = navIdx;
+          let curStep = routeInfo.route.legs[leg]?.steps?.[step];
+          if (curStep) {
+            const rem = stepRemainingMeters(latitude, longitude, curStep);
+            setNextTurnDistM(rem);
+            // Advance when close to end
+            if (rem < 25) {
+              // move to next step
+              const stepsLen = routeInfo.route.legs[leg].steps.length;
+              if (step + 1 < stepsLen) {
+                step += 1;
+              } else {
+                // next leg
+                const legsLen = routeInfo.route.legs.length;
+                if (leg + 1 < legsLen) {
+                  leg += 1; step = 0;
+                } else {
+                  // finished
+                  setNextTurnText('Route complete');
+                  setNextTurnDistM(0);
+                  speak('Route complete');
+                }
+              }
+              setNavIdx({ leg, step });
+              curStep = routeInfo.route.legs[leg]?.steps?.[step];
+              const instr = formatInstruction(curStep);
+              setNextTurnText(instr);
+              if (curStep) setNextTurnDistM(curStep.distance ?? null);
+              speak(instr);
+              // Update highlight
+              if (currentStepLayerRef.current) { try { leafletMap.current.removeLayer(currentStepLayerRef.current); } catch {} }
+              if (curStep?.geometry?.coordinates) {
+                const latlngs = curStep.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+                currentStepLayerRef.current = L.polyline(latlngs, { color: '#1976d2', weight: 6, opacity: 0.9 }).addTo(leafletMap.current);
+              }
+            }
+          }
+        }
+      },
+      (err) => { console.error('watchPosition error', err); stopNavigation(); },
+      { enableHighAccuracy: true, maximumAge: 500, timeout: 10000 }
+    );
+  };
+
+  const stopNavigation = () => {
+    setNavActive(false);
+    if (navWatchIdRef.current != null) { navigator.geolocation.clearWatch(navWatchIdRef.current); navWatchIdRef.current = null; }
+    if (headingMarkerRef.current) { try { leafletMap.current.removeLayer(headingMarkerRef.current); } catch {} headingMarkerRef.current = null; }
+    if (currentStepLayerRef.current) { try { leafletMap.current.removeLayer(currentStepLayerRef.current); } catch {} currentStepLayerRef.current = null; }
+  };
+
+  // Recompute schedule when dwell settings change
+  useEffect(() => {
+    if (routeInfo?.route && routeSummary?.order) {
+      setEtaSchedule(computeSchedule(routeInfo.route, routeSummary.order, new Date(), dwellDefaultMin, dwellOverrides));
+    }
+  }, [dwellDefaultMin, dwellOverrides, routeInfo, routeSummary]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -184,7 +869,7 @@ function App() {
     });
 
     // Add markers for each temple
-    data.forEach(district => {
+  data.forEach(district => {
       district.temples.forEach(temple => {
         const marker = L.marker([temple.coordinates.lat, temple.coordinates.lng], { icon: customIcon })
           .addTo(leafletMap.current);
@@ -207,11 +892,23 @@ function App() {
       });
     });
 
+    // If we already have a user location, render its marker
+    if (userLocation) {
+      const youIcon = L.circleMarker([userLocation.lat, userLocation.lng], {
+        radius: 8,
+        color: '#1976d2',
+        fillColor: '#2196f3',
+        fillOpacity: 0.9,
+        weight: 2,
+      }).addTo(leafletMap.current).bindTooltip('You are here');
+      userMarkerRef.current = youIcon;
+    }
+
     // Cleanup map instance
     return () => {
       leafletMap.current.remove();
     };
-  }, [mapPosition,mapStyle]);
+  }, [mapPosition,mapStyle,userLocation]);
 
   const focusOnTemple = (lat, lng, temple) => {
     if (leafletMap.current && temple.marker) {
@@ -300,30 +997,154 @@ const renderAccordionTwo = () => {
   };
 
   return (
-    <div className="app">
-      <header style={{ backgroundColor: '#E68057', color: 'white', textAlign: 'center', padding: '1rem' , display :'flex',alignItems: 'center',justifyContent : 'space-between'}}>
-        <div style={{display : 'flex'}}>
-          <img src={zLogo} style={{width : "80px" , height : '60px'}} alt=""/>
-          <h3>Zamorin's Central Devaswom - Temples</h3>
+    <div className="app" style={{ fontSize: lang === 'ml' ? '0.95rem' : '1rem' }}>
+      <header className="app-header" style={{ backgroundColor: '#E68057', color: 'white', textAlign: 'center', padding: '1rem' , display :'flex',alignItems: 'center',justifyContent : 'space-between'}}>
+        <div className="brand" style={{display : 'flex', alignItems:'center', gap: 8}}>
+          <img src={zLogo} style={{width : "80px" , height : '60px'}} alt="Zamorin Logo"/>
+          <h3 className="app-title" style={{ margin: 0, fontSize: lang === 'ml' ? '1.05rem' : '1.15rem' }}>{t('appTitle')}</h3>
         </div>
-        
-        <button style={{ backgroundColor: '#a2574f', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer' }} onClick={() => mapStyle === '1' ? setMapStyle('2') : setMapStyle('1')}>Toggle map style</button>
+        <button className="hamburger" aria-label="Menu" onClick={() => setMobileMenuOpen(true)} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer', display: 'none' }}>☰</button>
+        <div className="header-actions" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <select value={lang} onChange={(e) => setLang(e.target.value)} style={{ backgroundColor: '#fff', color: '#333', border: 'none', borderRadius: '4px', padding: '0.5rem 0.8rem', cursor: 'pointer' }}>
+            <option value="en">English</option>
+            <option value="ml">മലയാളം</option>
+          </select>
+          <button style={{ backgroundColor: '#a2574f', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer' }} onClick={() => setMapStyle((s) => s === '1' ? '2' : '1')}>{t('toggleMap')}</button>
+          <button style={{ backgroundColor: '#2e7d32', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer' }} onClick={() => setPlannerOpen(true)}>{t('planTrip')}</button>
+          <button style={{ backgroundColor: '#1976d2', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer' }} onClick={() => setHelpOpen(true)}>{t('helpBtn')}</button>
+        </div>
       </header>
+
+      {mobileMenuOpen && (
+        <div className="mobile-menu-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setMobileMenuOpen(false); }}>
+          <nav className="mobile-menu" role="menu" aria-label="Main menu">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <strong>{t('appTitle')}</strong>
+              <button onClick={() => setMobileMenuOpen(false)} aria-label="Close menu" style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <select value={lang} onChange={(e) => { setLang(e.target.value); setMobileMenuOpen(false); }} style={{ backgroundColor: '#fff', color: '#333', border: '1px solid #ddd', borderRadius: 6, padding: '10px 12px', cursor: 'pointer' }}>
+                <option value="en">English</option>
+                <option value="ml">മലയാളം</option>
+              </select>
+              <button onClick={() => { setMapStyle((s) => s === '1' ? '2' : '1'); setMobileMenuOpen(false); }} style={{ background: '#a2574f', color: '#fff', border: 'none', padding: '12px', borderRadius: 6, textAlign: 'left' }}>{t('toggleMap')}</button>
+              <button onClick={() => { setPlannerOpen(true); setMobileMenuOpen(false); }} style={{ background: '#2e7d32', color: '#fff', border: 'none', padding: '12px', borderRadius: 6, textAlign: 'left' }}>{t('planTrip')}</button>
+              <button onClick={() => { setHelpOpen(true); setMobileMenuOpen(false); }} style={{ background: '#1976d2', color: '#fff', border: 'none', padding: '12px', borderRadius: 6, textAlign: 'left' }}>{t('helpBtn')}</button>
+            </div>
+          </nav>
+        </div>
+      )}
+
       <div className="content">
         <div className="sidebar" 
         >
           
-          <h3>Districts</h3>
+          <h3>{t('districts')}</h3>
           <div className="accordion">
-            {renderAccordion()}
+            {data.map((district, index) => (
+              <div key={index} className="accordion-item">
+                <button className="accordion-header" onClick={() => handleAccordionClick(district.district)}>
+                  {lang === 'ml' ? (district.district_ml || toMlDistrict(district.district)) : district.district}
+                </button>
+                <div className={`accordion-body ${activeDistrict === district.district ? 'open' : ''}`}>
+                  {console.log("Accordion Body Class:", activeDistrict === district.district ? 'open' : 'closed')}
+                  <ul>
+                    {district.temples.map((temple, idx) => (
+                      <li
+                        style={{
+                          color: activeTemple === temple ? '#E68057' : 'black',
+                          cursor: 'pointer',
+                          fontSize: lang === 'ml' ? '0.95em' : '1em',
+                        }}
+                        key={idx}
+                        onClick={() => handleTempleClick(temple)}
+                      >
+                        {t('zamorins')} {lang === 'ml' ? (temple.name_ml || toMlName(temple.name)) : temple.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
           </div>
-          <h3>Trustee</h3>
+          <h3>{t('trustees')}</h3>
           <div className='accordion'>
           {renderAccordionTwo()}
           </div>
         </div>
-        <div id="map" ref={mapRef} style={{ width:'75%' , height: '100vh' }}></div>
+  <div id="map" ref={mapRef} style={{ width:'75%' , height: '100vh' }}></div>
       </div>
+
+      {/* Route summary overlay */}
+      {routeSummary && (
+        <div className="route-summary" style={{ position: 'fixed', right: 16, bottom: 16, background: '#fff', borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.15)', padding: '12px 14px', zIndex: 1200, minWidth: 260 }}>
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>{t('summary')}</div>
+          <div>{t('distance')}: {routeSummary.distanceKm.toFixed(1)} km</div>
+          <div>{t('eta')}: {Math.round(routeSummary.durationMin)} min</div>
+
+          {/* Next-turn guidance */}
+          {navActive && routeInfo?.route?.legs && (
+            <div aria-live="polite" role="status" style={{ marginTop: 8, padding: 8, background: '#f6f8fa', borderRadius: 6 }}>
+              <div style={{ fontWeight: 600 }}>{nextTurnText || 'Follow route'}</div>
+              {nextTurnDistM != null && <div>{formatDist(nextTurnDistM)} to next turn</div>}
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+                <input type="checkbox" checked={voiceEnabled} onChange={(e) => setVoiceEnabled(e.target.checked)} /> Voice guidance
+              </label>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={() => { if (routeLayer) { leafletMap.current.removeLayer(routeLayer); setRouteLayer(null); } setRouteSummary(null); setRouteInfo(null); setEtaSchedule([]); }} style={{ background: '#eee', border: '1px solid #ccc', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('clear')}</button>
+            {routeLayer && (
+              <button onClick={() => leafletMap.current.fitBounds(routeLayer.getBounds())} style={{ background: '#E68057', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('fit')}</button>
+            )}
+            <button onClick={exportToGoogleMaps} style={{ background: '#1a73e8', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('openInGMaps')}</button>
+          </div>
+          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+            {!navActive ? (
+              <button onClick={startNavigation} style={{ background: '#2e7d32', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('startNav')}</button>
+            ) : (
+              <button onClick={stopNavigation} style={{ background: '#b71c1c', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 4, cursor: 'pointer' }}>{t('stopNav')}</button>
+            )}
+          </div>
+
+          {/* Dwell and ETA controls */}
+          {routeInfo?.route?.legs && (
+            <div style={{ marginTop: 10, borderTop: '1px solid #eee', paddingTop: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <label>Per-stop time (min)</label>
+                <input type="number" min={0} max={600} value={dwellDefaultMin} onChange={(e) => setDwellDefaultMin(parseInt(e.target.value || '0', 10))} style={{ width: 80 }} />
+              </div>
+              {etaSchedule.length > 0 && (
+                <div style={{ maxHeight: 160, overflow: 'auto', border: '1px solid #eee', borderRadius: 6, padding: 8 }}>
+                  {etaSchedule.map((s, ix) => (
+                    <div key={ix} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                      <div>
+                        Stop {s.stopNumber}: {(() => {
+                          // show temple name for stop
+                          if (!routeSummary?.order || !plannedPoints) return '';
+                          const ordIdx = routeSummary.order[s.stopNumber];
+                          const pt = plannedPoints[ordIdx];
+                          // find temple by coordinates
+                          let name = '';
+                          data.forEach(d => d.temples.forEach(t => { if (Math.abs(t.coordinates.lat - pt.lat) < 1e-6 && Math.abs(t.coordinates.lng - pt.lng) < 1e-6) name = t.name; }));
+                          return name;
+                        })()}
+                      </div>
+                      <div title={`Arrive ~ ${s.arrival.toLocaleTimeString()}`}>ETA: {s.arrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <input type="number" min={0} max={600} value={dwellOverrides[s.stopNumber] ?? ''} placeholder={dwellDefaultMin} onChange={(e) => setDwellOverrides((prev) => ({ ...prev, [s.stopNumber]: e.target.value === '' ? undefined : parseInt(e.target.value || '0', 10) }))} style={{ width: 64 }} />
+                        <span>min</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Modal */}
       <div id="modal" ref={modalRef} style={{
@@ -342,10 +1163,10 @@ const renderAccordionTwo = () => {
           console.log("modalContenrt",modalContent)
         }
         
-        <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px', width: '600px', textAlign: 'center' }}>
+        <div className="temple-modal">
         <Slideshow slides={modalContent?.slides}/>
-          <h2>Zamorin's {modalContent?.name}</h2>
-          <p>{modalContent?.details}</p>
+          <h2 style={{ fontSize: lang === 'ml' ? '1.05rem' : '1.15rem' }}>{t('zamorins')} {lang === 'ml' ? (modalContent?.name_ml || toMlName(modalContent?.name)) : modalContent?.name}</h2>
+          <p style={{ fontSize: lang === 'ml' ? '0.95rem' : '1rem' }}>{lang === 'ml' ? (modalContent?.details_ml || toMlDetails(modalContent?.details)) : modalContent?.details}</p>
           {/* Add a Directions button */}
           <button style={{ backgroundColor: '#E68057', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer' }} onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${modalContent?.coordinates.lat},${modalContent?.coordinates.lng}`, '_blank')}>
             Get Directions
@@ -353,6 +1174,20 @@ const renderAccordionTwo = () => {
           <button style={{ backgroundColor: '#a2574f', color: 'white', border: 'none', borderRadius: '4px', padding: '0.5rem 1rem', cursor: 'pointer', marginLeft: '10px' }} onClick={closeModal}>Close</button>
         </div>
       </div>
+
+      {/* Trip Planner Modal */}
+      <TripPlannerModal
+        isOpen={plannerOpen}
+        onClose={() => setPlannerOpen(false)}
+        data={data}
+        hasLocation={!!userLocation}
+        onRequestLocation={() => acquireLocation()}
+        onPlan={({ selectedTemples, optimizeBy }) => planTrip(selectedTemples, optimizeBy)}
+        onSetStartLocation={setManualStartLocation}
+        lang={lang}
+      />
+
+      <InfoManual isOpen={helpOpen} onClose={() => setHelpOpen(false)} t={t} lang={lang} />
     </div>
   );
 }

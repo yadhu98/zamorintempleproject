@@ -13,3 +13,22 @@
     width: 13px;
     padding: 0;
 }
+
+/* Responsive slideshow container overrides */
+.w3-content.w3-display-container {
+    max-width: 100%;
+}
+.mySlides {
+    object-fit: cover;
+    max-height: 60vh;
+}
+@media (max-width: 768px) {
+    .mySlides { max-height: 45vh; }
+    .w3-left, .w3-right { font-size: 28px !important; }
+    .w3-badge { height: 12px; width: 12px; }
+}
+@media (max-width: 480px) {
+    .mySlides { max-height: 38vh; }
+    .w3-left, .w3-right { font-size: 32px !important; }
+    .w3-badge { height: 12px; width: 12px; }
+}

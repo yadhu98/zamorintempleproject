@@ -17,6 +17,7 @@ const Slideshow = ({slides}) => {
     }
   };
 
+
   const plusDivs = (n) => {
     showDivs(slideIndex + n);
   };
@@ -35,7 +36,6 @@ const Slideshow = ({slides}) => {
           className="mySlides"
           style={{
             width: "100%",
-            height : '400px',
             display: slideIndex === index + 1 ? "block" : "none",
           }}
         />

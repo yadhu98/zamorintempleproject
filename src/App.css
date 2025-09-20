@@ -1,3 +1,89 @@
+/* Global responsive enhancements */
+:root {
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+}
+
+/* Make width/height calculations predictable */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Ensure container elements shrink nicely */
+.app, .content, .sidebar, #map {
+    min-width: 0;
+}
+
+/* Prefer dynamic viewport height on supported browsers */
+#map {
+    height: 100dvh;
+}
+
+/* Responsive enhancements */
+@media (max-width: 768px) {
+    .content {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100% !important;
+        max-height: 45vh;
+        overflow: auto;
+        border-bottom: 1px solid #eee;
+    }
+    #map {
+        width: 100% !important;
+        height: calc(100dvh - 64px) !important; /* header ~64px */
+    }
+    .route-summary {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        min-width: auto !important;
+        width: calc(100% - 16px);
+        box-sizing: border-box;
+        font-size: 0.95rem;
+    }
+    .route-summary > div { flex-wrap: wrap; }
+    .route-summary button { flex: 1 1 auto; min-width: 140px; }
+}
+
+/* Trip planner modal responsive grid */
+.trip-planner-modal .tp-body {
+    display: grid;
+    grid-template-columns: 260px 1fr !important;
+    gap: 16px;
+}
+@media (max-width: 768px) {
+    .trip-planner-modal .tp-body {
+        grid-template-columns: 1fr !important;
+        max-height: 70vh;
+    }
+}
+
+/* Trip planner modal container sizing and scrolling */
+.trip-planner-modal {
+    width: min(900px, 96vw) !important;
+    max-height: min(90vh, 100dvh - 32px) !important;
+}
+.trip-planner-modal table {
+    font-size: 0.95em;
+    word-break: break-word;
+}
+.trip-planner-modal thead th, .trip-planner-modal tbody td {
+    vertical-align: top;
+}
+.trip-planner-modal .tp-body > div:last-child {
+    overflow: hidden;
+}
+.trip-planner-modal .tp-body .table-wrap {
+    overflow: auto;
+    border: 1px solid #eee;
+    border-radius: 6px;
+}
+@media (max-width: 480px) {
+    .trip-planner-modal table { font-size: 0.9em; }
+}
+
 .App {
     text-align: center;
 }
@@ -9,6 +95,7 @@
 
 .content {
     display: flex;
+    align-items: stretch;
 }
 
 
@@ -16,11 +103,15 @@
 
 .sidebar {
     width: 25%;
-    height: 100vh;
+    height: auto;
     background-color: #f4f4f4;
     padding: 1rem;
     overflow-y: auto;
     border-right: 1px solid #ddd;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    -webkit-overflow-scrolling: touch;
 }
 
 .accordion {
@@ -29,6 +120,7 @@
     border-radius: 8px;
     overflow: hidden;
     background-color: #f9f9f9;
+    overflow-wrap: anywhere;
 }
 
 .accordion-item {
@@ -46,6 +138,7 @@
     outline: none;
     font-size: 16px;
     transition: background-color 0.3s ease;
+    white-space: normal;
 }
 
 .accordion-header:hover {
@@ -65,7 +158,8 @@
 
 .accordion-body.open {
     max-height: 500px;
-    overflow: scroll;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
     /* Expand to fit content */
     padding: 10px;
     /* Add padding when expanded */
@@ -86,6 +180,7 @@
     font-size: 16px;
     font-weight: bold;
     transition: background-color 0.3s ease;
+    white-space: normal;
 }
 
 .accordion button:hover {
@@ -112,6 +207,8 @@
     max-height: 300px;
     /* Adjust based on content */
     padding: 12px 16px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 
@@ -127,6 +224,8 @@
     padding: 8px 0;
     border-bottom: 1px solid #ddd;
     font-size: 14px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .accordion .panel ul li:last-child {
@@ -166,4 +265,97 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Route summary card base */
+.route-summary {
+    max-width: 360px;
+}
+
+/* Header responsive controls */
+.app-header .hamburger { display: none; }
+@media (max-width: 768px) {
+    .app-header { padding: 12px; }
+    .app-header .app-title { font-size: 1rem !important; }
+    .app-header img { width: 60px !important; height: 46px !important; }
+    .app-header .header-actions { display: none !important; }
+    .app-header .hamburger { display: inline-block !important; }
+}
+
+.mobile-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: flex-end;
+    z-index: 2200;
+}
+.mobile-menu {
+    width: min(86vw, 360px);
+    height: 100dvh;
+    background: #fff;
+    padding: 16px;
+    box-shadow: -4px 0 16px rgba(0,0,0,0.2);
+    animation: slideIn .2s ease-out both;
+}
+@keyframes slideIn {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Info manual modal */
+.info-manual {
+    background: #fff;
+    width: min(900px, 96vw);
+    max-height: min(90vh, 100dvh - 32px);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.info-manual-header {
+    padding: 12px 16px;
+    background: #E68057;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.info-manual-body {
+    padding: 16px;
+    overflow-y: auto;
+}
+.info-manual-footer {
+    padding: 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* Temple details modal (image + text) */
+.temple-modal {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    width: min(700px, 96vw) !important;
+    max-height: min(90vh, 100dvh - 32px);
+    overflow: auto;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* Accordion tweaks on small screens */
+@media (max-width: 768px) {
+    .accordion button { font-size: 15px; }
+    .accordion .panel.show { max-height: 240px; }
+}
+
+/* When any modal is open, completely disable map interactions */
+body.modal-open #map { pointer-events: none !important; }
+
+/* Smooth scrolling within Trip Planner list on iOS */
+.trip-planner-modal .table-wrap {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
