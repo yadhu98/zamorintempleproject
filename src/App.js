@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 import zLogo from './images/ZamorinLogo-removebg-preview.png'
 import LocImage from './images/locIcon.png';
-import Member1 from './images/Person1.jpg'
+import Member1 from './images/Patron.jpeg'
 import Manager from './images/Manager.jpg'
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -117,15 +117,15 @@ import TempleDetailsModal from './TempleDetailsModal';
 
 const truste = [
   {
-    name : 'H.H. K C Unnianujan Raja, The Zamorin Raja of Calicut',
+    name : 'H.H. P.K. Kerala Varma, The Zamorin Raja of Calicut',
     position : 'Patron',
     image : Member1
   },
-    {
-      name : 'Smt. Maya Govind',
-      position : 'Manager',
-      image : Manager
-    }
+    // {
+    //   name : 'Smt. Maya Govind',
+    //   position : 'Manager',
+    //   image : Manager
+    // }
 ]
 
 function App() {
