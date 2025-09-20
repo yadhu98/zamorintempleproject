@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/zamorintempleproject/static/css/main.9ba6ffce.css",
+    "main.css": "/zamorintempleproject/static/css/main.a80275ad.css",
     "main.js": "/zamorintempleproject/static/js/main.881c2eec.js",
     "static/js/453.6b4e854f.chunk.js": "/zamorintempleproject/static/js/453.6b4e854f.chunk.js",
     "static/media/locIcon.png": "/zamorintempleproject/static/media/locIcon.325dd22f110dea7749df.png",
@@ -8,12 +8,12 @@
     "static/media/ZamorinLogo-removebg-preview.png": "/zamorintempleproject/static/media/ZamorinLogo-removebg-preview.9ab614c064605dbb55ee.png",
     "static/media/Manager.jpg": "/zamorintempleproject/static/media/Manager.8bc2f473d9eb71196567.jpg",
     "index.html": "/zamorintempleproject/index.html",
-    "main.9ba6ffce.css.map": "/zamorintempleproject/static/css/main.9ba6ffce.css.map",
+    "main.a80275ad.css.map": "/zamorintempleproject/static/css/main.a80275ad.css.map",
     "main.881c2eec.js.map": "/zamorintempleproject/static/js/main.881c2eec.js.map",
     "453.6b4e854f.chunk.js.map": "/zamorintempleproject/static/js/453.6b4e854f.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.9ba6ffce.css",
+    "static/css/main.a80275ad.css",
     "static/js/main.881c2eec.js"
   ]
 }
